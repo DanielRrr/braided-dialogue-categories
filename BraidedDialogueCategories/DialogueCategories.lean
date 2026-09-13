@@ -3,75 +3,183 @@ module
 public import Mathlib.CategoryTheory.Monoidal.Category
 public import Mathlib.CategoryTheory.Monoidal.Closed.Basic
 public import Mathlib.CategoryTheory.Category.Basic
+public import BraidedDialogueCategories.MonadicStrength
 
 @[expose] public section
 
 universe v
 
 namespace CategoryTheory
+open MonoidalCategory
 
 variable {C : Type v} [Category.{v} C] [MonoidalCategory.{v} C]
 
-class LeftClosed (X : C) where
-  /-- a choice of a right adjoint for `tensorLeft X` -/
-  rightAdj₁ : C ⥤ C
-  /-- `tensorLeft X` is a left adjoint -/
-  adj : MonoidalCategory.tensorLeft X ⊣ rightAdj
+/-!
+  Individual internal homs
+-/
 
-class RightClosed (X : C) where
-  /-- a choice of a right adjoint for `tensorRight X` -/
-  rightAdj₂ : C ⥤ C
-  /-- `tensorRight X` is a left adjoint -/
-  adj : MonoidalCategory.tensorRight X ⊣ rightAdj
+/--
+`[A, B]ₗ` exists if the functor `X ↦ X ⊗ A`
+has a representing object for morphisms into `B`. Equivalently, there is an object `H` such that
+`Hom(X ⊗ A, B) ≃ Hom(X, H)` naturally in `X`.
+-/
 
-variable (A : C)
-variable [LeftClosed A]
+class HasLeftIhom (A B : C) where
+  internalHomₗ : C
+  homEquiv : ∀ X : C, (A ⊗ X ⟶ B) ≃ (X ⟶ internalHomₗ)
 
-variable (B : C)
-variable [RightClosed B]
+/--
+The left internal hom `[A, B]ₗ`.
+-/
+def leftIhom (A B : C) [ihom : HasLeftIhom A B] : C :=
+  HasLeftIhom.internalHomₗ A B
 
-def leftIhom (A : C) [LeftClosed A] : C ⥤ C := LeftClosed.rightAdj₁ A
-def rightIhom (B : C) [RightClosed B] : C ⥤ C := RightClosed.rightAdj₂ B
+/--
+`[A, B]ᵣ` exists if there is an object `H` such that `Hom(A ⊗ X, B) ≃ Hom(X, H)` naturally in `X`.
+-/
+class HasRightIhom (A B : C) where
+  internalHomᵣ : C
+  homEquiv : ∀ X : C, (X ⊗ A ⟶ B) ≃ (X ⟶ internalHomᵣ)
 
-namespace ihoms
 
-def adjunction₁ : MonoidalCategory.tensorLeft A ⊣ leftIhom A := LeftClosed.adj
-def adjunction₂ : MonoidalCategory.tensorRight B ⊣ rightIhom B := RightClosed.adj
+/--
+The right internal hom `[A, B]ᵣ`.
+-/
+def rightIhom (A B : C) [HasRightIhom A B] : C :=
+  HasRightIhom.internalHomᵣ A B
 
-instance : (MonoidalCategory.tensorLeft A).IsLeftAdjoint := (ihoms.adjunction₁ A).isLeftAdjoint
+/-!
+  Fixed codomain closedness
+-/
 
-instance : (leftIhom A).IsRightAdjoint := (ihoms.adjunction₁ A).isRightAdjoint
+/--
+`C` is left closed at `B` if `[A, B]ₗ` exists for every `A`.
+-/
+class LeftClosedAt (B : C) where
+  hasLeftIhom : ∀ A : C, HasLeftIhom A B
 
-instance : (MonoidalCategory.tensorRight B).IsLeftAdjoint := (ihoms.adjunction₂ B).isLeftAdjoint
+instance (A B : C) [LeftClosedAt B] : HasLeftIhom A B :=
+  LeftClosedAt.hasLeftIhom A
 
-instance : (rightIhom B).IsRightAdjoint := (ihoms.adjunction₂ B).isRightAdjoint
+/--
+`C` is right closed at `B` if `[A, B]ᵣ` exists for every `A`.
+-/
+class RightClosedAt (B : C) where
+  hasRightIhom : ∀ A : C, HasRightIhom A B
 
-/-- The evaluation natural transformation for the left internal hom. -/
-def evLeft : leftIhom A ⋙ MonoidalCategory.tensorLeft A ⟶ 𝟭 C :=
-  (ihoms.adjunction₁ A).counit
+instance (A B : C) [RightClosedAt B] : HasRightIhom A B :=
+  RightClosedAt.hasRightIhom A
 
-/-- The coevaluation natural transformation for the left internal hom. -/
-def coevLeft : 𝟭 C ⟶ MonoidalCategory.tensorLeft A ⋙ leftIhom A :=
-  (ihoms.adjunction₁ A).unit
 
-/-- The evaluation natural transformation for the right internal hom. -/
-def evRight : rightIhom B ⋙ MonoidalCategory.tensorRight B ⟶ 𝟭 C :=
-  (ihoms.adjunction₂ B).counit
+/-!
+  Distinguished object with the required closedness properties
+-/
 
-/-- The coevaluation natural transformation for the right internal hom. -/
-def coevRight : 𝟭 C ⟶ MonoidalCategory.tensorRight B ⋙ rightIhom B :=
-  (ihoms.adjunction₂ B).unit
 
-class DialogueCategory (C : Type v) [Category.{v} C] [MonoidalCategory.{v} C] where
+/-!
+  Combined version, useful for your dialogue category
+-/
+
+/--
+A distinguished object `bot` for which both families `[A, bot]ₗ` and `[A, bot]ᵣ` exist for every `A`.
+-/
+class DialogueCategory (C : Type v) [Category.{v} C] [MonoidalCategory C] where
   bot : C
-  ϕ : LeftClosed bot
-  ψ : RightClosed bot
+  [leftClosed : LeftClosedAt bot]
+  [rightClosed : RightClosedAt bot]
 
-class StarAutonomousCategory (C : Type v) [Category.{v} C] [MonoidalCategory.{v} C] [D : DialogueCategory C] where
-  η₁ : letI := D.ϕ
-       letI := D.ψ
-       𝟭 C ≅ leftIhom D.bot ⋙ rightIhom D.bot
+/-!
+  Internal homs into the distinguished object
+-/
 
-  η₂ : letI := D.ϕ
-       letI := D.ψ
-       𝟭 C ≅ rightIhom D.bot ⋙ leftIhom D.bot
+namespace DialogueCategory
+
+variable [D : DialogueCategory C]
+
+/-- `[A, bot]ₗ`. -/
+def leftDual (A : C) : C :=
+  letI := D.leftClosed
+  leftIhom A DialogueCategory.bot
+
+/-- The left evaluation arrow `A ⊗ [A, bot]ᵣ ⟶ bot`-/
+def leval (A : C) : A ⊗ leftDual A ⟶ bot :=
+  letI := D.leftClosed
+  (HasLeftIhom.homEquiv (A := A) (B := DialogueCategory.bot) (leftDual A)).symm (𝟙 (leftDual A))
+
+/-- `leftDual` is a contravariant functor. -/
+def leftDualMap {A B : C} (f : A ⟶ B) : leftDual B ⟶ leftDual A :=
+  letI := D.leftClosed
+  HasLeftIhom.homEquiv
+      (A := A)
+      (B := DialogueCategory.bot)
+      (leftDual B)
+      ((f ⊗ₘ 𝟙 (leftDual B)) ≫ leval B)
+
+def leftDualFunctor : Cᵒᵖ ⥤ C where
+  obj A := leftDual A.unop
+  map := fun {X Y} f =>
+    letI := D.leftClosed
+    HasLeftIhom.homEquiv
+      (A := Y.unop)
+      (B := D.bot)
+      (leftDual X.unop)
+      ((f.unop ⊗ₘ 𝟙 (leftDual X.unop)) ≫ leval X.unop)
+  map_id X := sorry
+  map_comp f g := sorry
+
+/-- `[A, bot]ᵣ`. -/
+def rightDual (A : C) : C :=
+  letI := D.rightClosed
+  rightIhom A DialogueCategory.bot
+
+/-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
+def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
+  letI := D.rightClosed
+  (HasRightIhom.homEquiv (A := A) (B := DialogueCategory.bot) (rightDual A)).symm (𝟙 (rightDual A))
+
+/-- `rightDual` is a contravariant functor. -/
+def rightDualMap {A B : C} (f : A ⟶ B) : rightDual B ⟶ rightDual A :=
+  letI := D.rightClosed
+  HasRightIhom.homEquiv
+    (A := A)
+    (B := DialogueCategory.bot)
+    (rightDual B)
+    ((𝟙 (rightDual B) ⊗ₘ f) ≫ reval B)
+
+def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
+  letI := D.leftClosed
+  HasLeftIhom.homEquiv
+      (A := A)
+      (B := DialogueCategory.bot)
+      (B ⊗ leftDual (A ⊗ B))
+      ((associator A B (leftDual (A ⊗ B))).inv ≫
+        leval (A ⊗ B))
+
+def rev (A B : C) : (rightDual (A ⊗ B)) ⊗ A ⟶ rightDual B :=
+  letI := D.rightClosed
+  HasRightIhom.homEquiv
+    (A := B)
+    (B := DialogueCategory.bot)
+    (rightDual (A ⊗ B) ⊗ A)
+    ((associator (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
+
+
+-- structure Turn (A : C) where
+--  turn : leftDual A ≅ rightDual A
+--  turnNaturality : ∀ {A B : C} (f : A ⟶ B),
+--    leftDual.map f ≫ (turn B).hom =
+--      (turn A).hom ≫ rightDual.map f
+
+structure Wheel (A B : C) where
+  wheel : (A ⊗ B ⟶ bot) ≃ (B ⊗ A ⟶ bot)
+  wheelNatInA : sorry
+  wheelNatInB : sorry
+
+
+end DialogueCategory
+
+open DialogueCategory in
+class StarAutonomousCategory (C : Type v)
+    [Category.{v} C] [MonoidalCategory C] [DialogueCategory C] where
+  etaStar₁ : ∀ A : C, A ≅ leftDual (rightDual A)
+  etaStar₂ : ∀ A : C, A ≅ rightDual (leftDual A)
