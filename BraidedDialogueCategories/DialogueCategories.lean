@@ -118,9 +118,9 @@ def leftDualFunctor : Cᵒᵖ ⥤ C where
   map_comp f g := sorry
 
 /-- `[A, bot]ᵣ`. -/
-def rightDual (A : C) : C :=
+abbrev rightDual (A : C) : C :=
   letI := D.rightClosed
-  rightIhom A DialogueCategory.bot
+  HasRightIhom.internalHomᵣ A D.bot
 
 /-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
 def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
