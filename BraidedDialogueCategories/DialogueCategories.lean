@@ -4,6 +4,7 @@ public import Mathlib.CategoryTheory.Monoidal.Category
 public import Mathlib.CategoryTheory.Monoidal.Closed.Basic
 public import Mathlib.CategoryTheory.Category.Basic
 public import BraidedDialogueCategories.MonadicStrength
+public import Mathlib.Logic.Equiv.Defs
 
 @[expose] public section
 
@@ -27,6 +28,10 @@ has a representing object for morphisms into `B`. Equivalently, there is an obje
 class HasLeftIhom (A B : C) where
   internalHomₗ : C
   homEquiv : ∀ X : C, (A ⊗ X ⟶ B) ≃ (X ⟶ internalHomₗ)
+  homEquivNaturality :
+    ∀ {X Y : C} (f : X ⟶ Y) (g : A ⊗ Y ⟶ B),
+      homEquiv X ((𝟙 A ⊗ₘ f) ≫ g) =
+        f ≫ homEquiv Y g
 
 /--
 The left internal hom `[A, B]ₗ`.
@@ -79,9 +84,9 @@ namespace DialogueCategory
 variable [D : DialogueCategory C]
 
 /-- `[A, bot]ₗ`. -/
-def leftDual (A : C) : C :=
+abbrev leftDual (A : C) : C :=
   letI := D.leftClosed
-  leftIhom A DialogueCategory.bot
+  HasLeftIhom.internalHomₗ A D.bot
 
 /-- The left evaluation arrow `A ⊗ [A, bot]ᵣ ⟶ bot`-/
 def leval (A : C) : A ⊗ leftDual A ⟶ bot :=
@@ -145,6 +150,51 @@ def rev (A B : C) : (rightDual (A ⊗ B)) ⊗ A ⟶ rightDual B :=
     (rightDual (A ⊗ B) ⊗ A)
     ((associator (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
 
+def leftName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ leftDual A :=
+  letI := D.leftClosed
+  HasLeftIhom.homEquiv
+    (A := A)
+    (B := D.bot)
+    (𝟙_ C)
+    ((rightUnitor A).hom ≫ f)
+
+lemma leftName_uncurry (A : C) (f : A ⟶ bot) :
+    ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A =
+      (rightUnitor A).hom ≫ f := by
+  letI := D.leftClosed
+  let e₀ :=
+    HasLeftIhom.homEquiv
+      (A := A)
+      (B := D.bot)
+      (𝟙_ C)
+  let e₁ :=
+    HasLeftIhom.homEquiv
+      (A := A)
+      (B := D.bot)
+      (leftDual A)
+  apply e₀.injective
+  rw [HasLeftIhom.homEquivNaturality
+    (A := A)
+    (B := D.bot)
+    (f := leftName A f)
+    (g := leval A)]
+  change
+    leftName A f ≫ e₁ (e₁.symm (𝟙 (leftDual A))) =
+      e₀ ((rightUnitor A).hom ≫ f)
+  rw [e₁.apply_symm_apply]
+  simp [leftName, e₀]
+
+def rightName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ rightDual A :=
+  letI := D.rightClosed
+  HasRightIhom.homEquiv
+    (A := A)
+    (B := D.bot)
+    (𝟙_ C)
+    ((leftUnitor A).hom ≫ f)
+
+lemma leftNameFact (A : C) (f : A ⟶ bot) : f = (rightUnitor A).inv ≫ ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A := by
+  rw [leftName_uncurry]
+  simp
 
 -- structure Turn (A : C) where
 --  turn : leftDual A ≅ rightDual A
