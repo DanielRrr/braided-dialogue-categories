@@ -48,10 +48,6 @@ The right internal hom `[A, B]ᵣ`.
 def rightIhom (A B : C) [HasRightIhom A B] : C :=
   HasRightIhom.internalHomᵣ A B
 
-/-!
-  Fixed codomain closedness
--/
-
 /--
 `C` is left closed at `B` if `[A, B]ₗ` exists for every `A`.
 -/
@@ -70,16 +66,6 @@ class RightClosedAt (B : C) where
 instance (A B : C) [RightClosedAt B] : HasRightIhom A B :=
   RightClosedAt.hasRightIhom A
 
-
-/-!
-  Distinguished object with the required closedness properties
--/
-
-
-/-!
-  Combined version, useful for your dialogue category
--/
-
 /--
 A distinguished object `bot` for which both families `[A, bot]ₗ` and `[A, bot]ᵣ` exist for every `A`.
 -/
@@ -87,10 +73,6 @@ class DialogueCategory (C : Type v) [Category.{v} C] [MonoidalCategory C] where
   bot : C
   [leftClosed : LeftClosedAt bot]
   [rightClosed : RightClosedAt bot]
-
-/-!
-  Internal homs into the distinguished object
--/
 
 namespace DialogueCategory
 
