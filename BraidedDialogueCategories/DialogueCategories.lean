@@ -28,7 +28,7 @@ has a representing object for morphisms into `B`. Equivalently, there is an obje
 class HasLeftIhom (A B : C) where
   internalHomₗ : C
   homEquiv : ∀ X : C, (A ⊗ X ⟶ B) ≃ (X ⟶ internalHomₗ)
-  homEquivNaturality :
+  homEquivNaturalityₗ :
     ∀ {X Y : C} (f : X ⟶ Y) (g : A ⊗ Y ⟶ B),
       homEquiv X ((𝟙 A ⊗ₘ f) ≫ g) =
         f ≫ homEquiv Y g
@@ -45,6 +45,9 @@ def leftIhom (A B : C) [ihom : HasLeftIhom A B] : C :=
 class HasRightIhom (A B : C) where
   internalHomᵣ : C
   homEquiv : ∀ X : C, (X ⊗ A ⟶ B) ≃ (X ⟶ internalHomᵣ)
+  homEquivNaturalityᵣ :
+    ∀ {X Y : C} (f : X ⟶ Y) (g : Y ⊗ A ⟶ B),
+      homEquiv X ((f ⊗ₘ 𝟙 A) ≫ g) = f ≫ homEquiv Y g
 
 
 /--
@@ -173,7 +176,7 @@ lemma leftName_uncurry (A : C) (f : A ⟶ bot) :
       (B := D.bot)
       (leftDual A)
   apply e₀.injective
-  rw [HasLeftIhom.homEquivNaturality
+  rw [HasLeftIhom.homEquivNaturalityₗ
     (A := A)
     (B := D.bot)
     (f := leftName A f)
