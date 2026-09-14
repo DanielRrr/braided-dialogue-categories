@@ -227,6 +227,28 @@ structure Wheel (C : Type v) [Category.{v} C] [MonoidalCategory C] [DialogueCate
 
 variable (C : Type v) [Category.{v} C] [MonoidalCategory C] [D : DialogueCategory.{v} C]
 
+def turnToWheel₁ (t : Turn C) (A B : C) (f : A ⊗ B ⟶ D.bot) :
+  letI := D
+  (B ⊗ A ⟶ D.bot) :=
+  letI := D.leftClosed
+  letI := D.rightClosed
+  (HasRightIhom.homEquiv (A := A) (B := D.bot) B).symm ((HasLeftIhom.homEquiv (A := A) (B := D.bot) B).toFun f ≫ (t.turn A).hom)
+
+def turnToWheel₂ (t : Turn C) (A B : C) (f : B ⊗ A ⟶ D.bot) :
+  letI := D
+  (A ⊗ B ⟶ D.bot) :=
+  letI := D.leftClosed
+  letI := D.rightClosed
+  (HasLeftIhom.homEquiv (A := A) (B := D.bot) B).symm ((HasRightIhom.homEquiv (A := A) (B := D.bot) B).toFun f ≫ (t.turn A).inv)
+
+lemma turnToWheelInv₁ (t : Turn C) (A B : C) : Function.LeftInverse (turnToWheel₂ C t A B) (turnToWheel₁ C t A B) := by
+  intro f
+  simp [turnToWheel₁, turnToWheel₂]
+
+lemma turnToWheelInv₂ (t : Turn C) (A B : C) :  Function.RightInverse (turnToWheel₂ C t A B) (turnToWheel₁ C t A B) := by
+  intro f
+  simp [turnToWheel₁, turnToWheel₂]
+
 def TurnEquivWheel : Turn C ≃ Wheel C where
   toFun t :=
     letI := D.leftClosed
@@ -236,17 +258,10 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
         Wheel.mk
          (fun A B =>
             Equiv.mk
-              (fun f : A ⊗ B ⟶ bot =>
-                let phi := (HasLeftIhom.homEquiv (A := A) (B := D.bot) B).toFun f
-                let cBTurn := phi ≫ (turn A).hom
-                (HasRightIhom.homEquiv (A := A) (B := D.bot) B).symm cBTurn)
-              (fun f : B ⊗ A ⟶ bot =>
-                 let psiInv := (HasRightIhom.homEquiv (A := A) (B := D.bot) B).toFun f
-                 let cBTurn := psiInv ≫ (turn A).inv
-                 (HasLeftIhom.homEquiv (A := A) (B := D.bot) B).symm cBTurn
-              )
-              sorry
-              sorry
+              (turnToWheel₁ C t A B)
+              (turnToWheel₂ C t A B)
+              (turnToWheelInv₁ C t A B)
+              (turnToWheelInv₂ C t A B)
           )
          sorry
          sorry
