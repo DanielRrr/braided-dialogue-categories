@@ -117,7 +117,11 @@ def leftDualFunctor : Cᵒᵖ ⥤ C where
   map_id X := by
     letI := D.leftClosed
     simp[leftDual, leval]
-  map_comp {A B C} f g := by sorry
+  map_comp {A B C} f g := by
+    letI := D.leftClosed
+    simp[leftDual, leval]
+    rw [← HasLeftIhom.homEquivNaturalityₗ]
+    sorry
 
 /-- `[A, bot]ᵣ`. -/
 abbrev rightDual (A : C) : C :=
@@ -134,6 +138,18 @@ def rightDualMap {A B : C} (f : A ⟶ B) : rightDual B ⟶ rightDual A :=
   letI := D.rightClosed
   HasRightIhom.homEquiv (A := A) (B := DialogueCategory.bot) (rightDual B)
     ((𝟙 (rightDual B) ⊗ₘ f) ≫ reval B)
+
+def rightDualFunctor : Cᵒᵖ ⥤ C where
+  obj A := rightDual A.unop
+  map := fun {X Y} f =>
+    letI := D.rightClosed
+    HasRightIhom.homEquiv
+      (A := Y.unop)
+      (B := D.bot)
+      (rightDual X.unop)
+      ((𝟙 (rightDual X.unop) ⊗ₘf.unop) ≫ reval X.unop)
+  map_id X := by sorry
+  map_comp {A B C} f g := by sorry
 
 def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
   letI := D.leftClosed
@@ -197,16 +213,47 @@ lemma rightNameFact (A : C) (f : A ⟶ bot) : f = (leftUnitor A).inv ≫ (rightN
   rw [rightNameUncurry]
   simp
 
-structure Turn where
+structure Turn (C : Type v) [Category.{v} C] [MonoidalCategory C] [DialogueCategory.{v} C] where
   turn : ∀ A : C, leftDual A ≅ rightDual A
---  turnNaturality : ∀ {A B : C} (f : A ⟶ B), leftDual.map f ≫ (turn B).hom = (turn A).hom ≫ rightDual.map f
+  turnNaturality : ∀ {A B : C} (f : B ⟶ A),
+    leftDualFunctor.map f.op ≫ (turn B).hom = (turn A).hom ≫ rightDualFunctor.map f.op
 
-structure Wheel where
+structure Wheel (C : Type v) [Category.{v} C] [MonoidalCategory C] [DialogueCategory.{v} C] where
   wheel : ∀ (A B : C), (A ⊗ B ⟶ bot) ≃ (B ⊗ A ⟶ bot)
   wheelNatInA : ∀ {A₁ A₂ B : C} (f : A₁ ⟶ A₂) (g : A₂ ⊗ B ⟶ bot),
     wheel A₁ B ((f ⊗ₘ 𝟙 B) ≫ g) = (𝟙 B ⊗ₘ f) ≫ wheel A₂ B g
   wheelNatInB : ∀ {A B₁ B₂ : C} (f : B₁ ⟶ B₂) (g : A ⊗ B₂ ⟶ bot),
     wheel A B₁ ((𝟙 A ⊗ₘ f) ≫ g) = (f ⊗ₘ 𝟙 A) ≫ wheel A B₂ g
+
+variable (C : Type v) [Category.{v} C] [MonoidalCategory C] [D : DialogueCategory.{v} C]
+
+def TurnEquivWheel : Turn C ≃ Wheel C where
+  toFun t :=
+    letI := D.leftClosed
+    letI := D.rightClosed
+    match t with
+      | { turn, turnNaturality } =>
+        Wheel.mk
+         (fun A B =>
+            Equiv.mk
+              (fun f : A ⊗ B ⟶ bot =>
+                let phi := (HasLeftIhom.homEquiv (A := A) (B := D.bot) B).toFun f
+                let cBTurn := phi ≫ (turn A).hom
+                (HasRightIhom.homEquiv (A := A) (B := D.bot) B).symm cBTurn)
+              (fun f : B ⊗ A ⟶ bot =>
+                 let psiInv := (HasRightIhom.homEquiv (A := A) (B := D.bot) B).toFun f
+                 let cBTurn := psiInv ≫ (turn A).inv
+                 (HasLeftIhom.homEquiv (A := A) (B := D.bot) B).symm cBTurn
+              )
+              sorry
+              sorry
+          )
+         sorry
+         sorry
+  invFun := sorry
+  left_inv := sorry
+  right_inv := sorry
+
 
 end DialogueCategory
 
