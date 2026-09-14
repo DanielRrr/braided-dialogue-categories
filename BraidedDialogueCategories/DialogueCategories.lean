@@ -36,7 +36,7 @@ class HasLeftIhom (A B : C) where
 /--
 The left internal hom `[A, B]ₗ`.
 -/
-def leftIhom (A B : C) [ihom : HasLeftIhom A B] : C :=
+abbrev leftIhom (A B : C) [ihom : HasLeftIhom A B] : C :=
   HasLeftIhom.internalHomₗ A B
 
 /--
@@ -114,8 +114,10 @@ def leftDualFunctor : Cᵒᵖ ⥤ C where
       (B := D.bot)
       (leftDual X.unop)
       ((f.unop ⊗ₘ 𝟙 (leftDual X.unop)) ≫ leval X.unop)
-  map_id X := sorry
-  map_comp f g := sorry
+  map_id X := by
+    letI := D.leftClosed
+    simp[leftDual, leval]
+  map_comp {A B C} f g := by sorry
 
 /-- `[A, bot]ᵣ`. -/
 abbrev rightDual (A : C) : C :=
@@ -130,10 +132,7 @@ def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
 /-- `rightDual` is a contravariant functor. -/
 def rightDualMap {A B : C} (f : A ⟶ B) : rightDual B ⟶ rightDual A :=
   letI := D.rightClosed
-  HasRightIhom.homEquiv
-    (A := A)
-    (B := DialogueCategory.bot)
-    (rightDual B)
+  HasRightIhom.homEquiv (A := A) (B := DialogueCategory.bot) (rightDual B)
     ((𝟙 (rightDual B) ⊗ₘ f) ≫ reval B)
 
 def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
@@ -147,45 +146,32 @@ def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
 
 def rev (A B : C) : (rightDual (A ⊗ B)) ⊗ A ⟶ rightDual B :=
   letI := D.rightClosed
-  HasRightIhom.homEquiv
-    (A := B)
-    (B := DialogueCategory.bot)
+  HasRightIhom.homEquiv (A := B) (B := DialogueCategory.bot)
     (rightDual (A ⊗ B) ⊗ A)
     ((associator (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
 
 def leftName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ leftDual A :=
   letI := D.leftClosed
-  HasLeftIhom.homEquiv
-    (A := A)
-    (B := D.bot)
+  HasLeftIhom.homEquiv (A := A) (B := D.bot)
     (𝟙_ C)
     ((rightUnitor A).hom ≫ f)
 
-lemma leftName_uncurry (A : C) (f : A ⟶ bot) :
-    ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A =
-      (rightUnitor A).hom ≫ f := by
+lemma leftNameUncurry (A : C) (f : A ⟶ bot) :
+    ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A = (rightUnitor A).hom ≫ f := by
   letI := D.leftClosed
   let e₀ :=
-    HasLeftIhom.homEquiv
-      (A := A)
-      (B := D.bot)
-      (𝟙_ C)
-  let e₁ :=
-    HasLeftIhom.homEquiv
-      (A := A)
-      (B := D.bot)
-      (leftDual A)
+    HasLeftIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
+  let e₁ := HasLeftIhom.homEquiv (A := A) (B := D.bot) (leftDual A)
   apply e₀.injective
-  rw [HasLeftIhom.homEquivNaturalityₗ
-    (A := A)
-    (B := D.bot)
-    (f := leftName A f)
-    (g := leval A)]
-  change
-    leftName A f ≫ e₁ (e₁.symm (𝟙 (leftDual A))) =
-      e₀ ((rightUnitor A).hom ≫ f)
+  let e₂ := HasLeftIhom.homEquivNaturalityₗ (A := A) (B := D.bot) (f := leftName A f) (g := leval A)
+  rw [e₂]
+  change leftName A f ≫ e₁ (e₁.symm (𝟙 (leftDual A))) = e₀ ((rightUnitor A).hom ≫ f)
   rw [e₁.apply_symm_apply]
   simp [leftName, e₀]
+
+lemma leftNameFact (A : C) (f : A ⟶ bot) : f = (rightUnitor A).inv ≫ ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A := by
+  rw [leftNameUncurry]
+  simp
 
 def rightName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ rightDual A :=
   letI := D.rightClosed
@@ -195,21 +181,32 @@ def rightName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ rightDual A :=
     (𝟙_ C)
     ((leftUnitor A).hom ≫ f)
 
-lemma leftNameFact (A : C) (f : A ⟶ bot) : f = (rightUnitor A).inv ≫ ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A := by
-  rw [leftName_uncurry]
+lemma rightNameUncurry (A : C) (f : A ⟶ bot) :
+  (rightName A f ⊗ₘ (𝟙 A)) ≫ reval A = (leftUnitor A).hom ≫ f := by
+  letI := D.rightClosed
+  let e₀ := HasRightIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
+  let e₁ := HasRightIhom.homEquiv (A := A) (B := D.bot) (rightDual A)
+  apply e₀.injective
+  let e₂ := HasRightIhom.homEquivNaturalityᵣ (A := A) (B := D.bot) (f := rightName A f) (g := reval A)
+  rw [e₂]
+  change rightName A f ≫ e₁ (e₁.symm (𝟙 (rightDual A))) = e₀ ((leftUnitor A).hom ≫ f)
+  rw [e₁.apply_symm_apply]
+  simp [rightName, e₀]
+
+lemma rightNameFact (A : C) (f : A ⟶ bot) : f = (leftUnitor A).inv ≫ (rightName A f ⊗ₘ (𝟙 A)) ≫ reval A := by
+  rw [rightNameUncurry]
   simp
 
--- structure Turn (A : C) where
---  turn : leftDual A ≅ rightDual A
---  turnNaturality : ∀ {A B : C} (f : A ⟶ B),
---    leftDual.map f ≫ (turn B).hom =
---      (turn A).hom ≫ rightDual.map f
+structure Turn where
+  turn : ∀ A : C, leftDual A ≅ rightDual A
+--  turnNaturality : ∀ {A B : C} (f : A ⟶ B), leftDual.map f ≫ (turn B).hom = (turn A).hom ≫ rightDual.map f
 
-structure Wheel (A B : C) where
-  wheel : (A ⊗ B ⟶ bot) ≃ (B ⊗ A ⟶ bot)
-  wheelNatInA : sorry
-  wheelNatInB : sorry
-
+structure Wheel where
+  wheel : ∀ (A B : C), (A ⊗ B ⟶ bot) ≃ (B ⊗ A ⟶ bot)
+  wheelNatInA : ∀ {A₁ A₂ B : C} (f : A₁ ⟶ A₂) (g : A₂ ⊗ B ⟶ bot),
+    wheel A₁ B ((f ⊗ₘ 𝟙 B) ≫ g) = (𝟙 B ⊗ₘ f) ≫ wheel A₂ B g
+  wheelNatInB : ∀ {A B₁ B₂ : C} (f : B₁ ⟶ B₂) (g : A ⊗ B₂ ⟶ bot),
+    wheel A B₁ ((𝟙 A ⊗ₘ f) ≫ g) = (f ⊗ₘ 𝟙 A) ≫ wheel A B₂ g
 
 end DialogueCategory
 
