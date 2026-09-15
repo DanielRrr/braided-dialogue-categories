@@ -115,7 +115,6 @@ def leftDualFunctor : Cᵒᵖ ⥤ C where
       (leftDual X.unop)
       ((f.unop ⊗ₘ 𝟙 (leftDual X.unop)) ≫ leval X.unop)
   map_id X := by
-    letI := D.leftClosed
     simp[leftDual, leval]
   map_comp {A B C} f g := by
     letI := D.leftClosed
@@ -249,6 +248,44 @@ lemma turnToWheelInv₂ (t : Turn C) (A B : C) :  Function.RightInverse (turnToW
   intro f
   simp [turnToWheel₁, turnToWheel₂]
 
+lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (g : A₁ ⟶ A₂) (f : A₂ ⊗ B ⟶ bot) :
+  turnToWheel₁ C t A₁ B (g ▷ B ≫ f) = B ◁ g ≫ turnToWheel₁ C t A₂ B f := by
+  letI := D.leftClosed
+  letI := D.rightClosed
+  unfold turnToWheel₁
+  have hleft : (HasLeftIhom.homEquiv (A := A₁) (B := D.bot) B).toFun (g ▷ B ≫ f)=
+    (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f ≫ leftDualMap g := by
+    unfold leftDualMap
+    rw [← HasLeftIhom.homEquivNaturalityₗ]
+    sorry
+  have hturn :
+    leftDualMap g ≫ (t.turn A₁).hom =
+      (t.turn A₂).hom ≫ rightDualMap g := by
+    exact t.turnNaturality g
+  have hright :
+    (HasRightIhom.homEquiv (A := A₁) (B := D.bot) B).toFun
+        (B ◁ g ≫
+          (HasRightIhom.homEquiv (A := A₂) (B := D.bot) B).invFun
+            ((HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f
+              ≫ (t.turn A₂).hom)) =
+    (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f
+      ≫ (t.turn A₂).hom
+      ≫ rightDualMap g := by
+    simp
+    sorry
+  apply (HasRightIhom.homEquiv
+    (A := A₁) (B := D.bot) B).injective
+  rw [Equiv.apply_symm_apply, hleft, Category.assoc, hturn, ← hright]
+  rfl
+
+
+lemma turnToWheelNat₂ (t : Turn C) (A B₁ B₂ : C) (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot)
+  : turnToWheel₁ C t A B₁ (A ◁ g ≫ f) = g ▷ A ≫ turnToWheel₁ C t A B₂ f := by
+  letI := D.leftClosed
+  letI := D.rightClosed
+  unfold turnToWheel₁
+  sorry
+
 def TurnEquivWheel : Turn C ≃ Wheel C where
   toFun t :=
     letI := D.leftClosed
@@ -263,9 +300,22 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
               (turnToWheelInv₁ C t A B)
               (turnToWheelInv₂ C t A B)
           )
-         sorry
-         sorry
-  invFun := sorry
+         (fun {A₁ A₂ B} (g : A₁ ⟶ A₂) (f : A₂ ⊗ B ⟶ bot) => by
+           simp
+           apply turnToWheelNat₁
+          )
+         (fun {A B₁ B₂} (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot) => by
+           simp
+           apply turnToWheelNat₂
+         )
+  invFun w :=
+    letI := D.leftClosed
+    letI := D.rightClosed
+    match w with
+      | { wheel, wheelNatInA, wheelNatInB } =>
+        Turn.mk
+          sorry
+          sorry
   left_inv := sorry
   right_inv := sorry
 
