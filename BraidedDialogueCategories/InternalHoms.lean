@@ -20,7 +20,6 @@ variable {C : Type v} [Category.{v} C] [MonoidalCategory.{v} C]
 has a representing object for morphisms into `B`. Equivalently, there is an object `H` such that
 `Hom(X ⊗ A, B) ≃ Hom(X, H)` naturally in `X`.
 -/
-
 class HasLeftIhom (A B : C) where
   internalHomₗ : C
   homEquiv : ∀ X : C, (A ⊗ X ⟶ B) ≃ (X ⟶ internalHomₗ)
