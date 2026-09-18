@@ -223,7 +223,20 @@ lemma turnToWheelNat₂ (t : Turn C) (A B₁ B₂ : C) (g : B₁ ⟶ B₂) (f : 
   : turnToWheel₁ C t A B₁ (A ◁ g ≫ f) = g ▷ A ≫ turnToWheel₁ C t A B₂ f := by
   letI := D.leftClosed
   letI := D.rightClosed
-  sorry
+  show
+    (HasRightIhom.homEquiv (A := A) (B := bot) B₁).symm
+      ((HasLeftIhom.homEquiv (A := A) (B := bot) B₁)
+        (A ◁ g ≫ f) ≫ (t.turn A).hom) =
+    g ▷ A ≫
+      (HasRightIhom.homEquiv (A := A) (B := bot) B₂).symm
+        ((HasLeftIhom.homEquiv (A := A) (B := bot) B₂) f ≫
+          (t.turn A).hom)
+  rw [← MonoidalCategory.id_tensorHom]
+  rw [HasLeftIhom.homEquivNaturalityₗ]
+  rw [Category.assoc]
+  apply (HasRightIhom.homEquiv (A := A) (B := bot) B₁).injective
+  simp [HasRightIhom.symm_apply_eq]
+
 
 def wheelToTurn₁ (wheel : Wheel C) (A : C) : (leftDual A ⟶ leftDual A) ≃ (leftDual A ⟶ rightDual A) :=
   letI := D.leftClosed
