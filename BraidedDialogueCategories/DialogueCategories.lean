@@ -60,7 +60,11 @@ def leftDualFunctor : Cᵒᵖ ⥤ C where
     sorry
 
 lemma leftDualFunctor_map_op {A B : C} (f : A ⟶ B) :
-    leftDualFunctor.map f.op = leftDualMap f := rfl
+  leftDualFunctor.map f.op = leftDualMap f := rfl
+
+lemma leftDualFunctor_map_op' {A B : C} (f : A ⟶ B) :
+  letI := D.leftClosed
+  leftDualFunctor.map f.op = HasLeftIhom.contramap (B := D.bot) f := rfl
 
 /-- `[A, bot]ᵣ`. -/
 abbrev rightDual (A : C) : C :=
@@ -91,7 +95,11 @@ def rightDualFunctor : Cᵒᵖ ⥤ C where
   map_comp {A B C} f g := sorry
 
 lemma rightDualFunctor_map_op {A B : C} (f : A ⟶ B) :
-    rightDualFunctor.map f.op = rightDualMap f := rfl
+  rightDualFunctor.map f.op = rightDualMap f := rfl
+
+lemma rightDualFunctor_map_op' {A B : C} (f : A ⟶ B) :
+  letI := D.rightClosed
+  rightDualFunctor.map f.op = HasRightIhom.contramap (B := D.bot) f := rfl
 
 def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
   letI := D.leftClosed
@@ -196,108 +204,25 @@ lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (g : A₁ ⟶ A₂) (f : 
     turnToWheel₁ C t A₁ B (g ▷ B ≫ f) = B ◁ g ≫ turnToWheel₁ C t A₂ B f := by
   letI := D.leftClosed
   letI := D.rightClosed
-  show (HasRightIhom.homEquiv (A := A₁) (B := bot) B).symm
-      ((HasLeftIhom.homEquiv (A := A₁) (B := bot) B).toFun (g ▷ B ≫ f) ≫ (t.turn A₁).hom) =
-    B ◁ g ≫ (HasRightIhom.homEquiv (A := A₂) (B := bot) B).symm
-      ((HasLeftIhom.homEquiv (A := A₂) (B := bot) B).toFun f ≫ (t.turn A₂).hom)
-  sorry
-  /-
-  rw [show g ▷ B = g ⊗ₘ 𝟙 B from sorry]
-  rw [HasLeftIhom.homEquiv_naturality_left (B := bot) g f]
-  rw [Category.assoc, ← leftDualFunctor_map_op, t.turnNaturality g, rightDualFunctor_map_op]
-  rw [← Category.assoc]
-  rw [show B ◁ g = 𝟙 B ⊗ₘ g from sorry]
-  exact (HasRightIhom.symm_naturality_left (B := bot) g _).symm
-  -/
-/-
-lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (g : A₁ ⟶ A₂) (f : A₂ ⊗ B ⟶ bot) :
-  turnToWheel₁ C t A₁ B (g ▷ B ≫ f) = B ◁ g ≫ turnToWheel₁ C t A₂ B f := by
-  letI := D.leftClosed
-  letI := D.rightClosed
-  unfold turnToWheel₁
-  have hleft : (HasLeftIhom.homEquiv (A := A₁) (B := D.bot) B).toFun (g ▷ B ≫ f)=
-    (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f ≫ leftDualMap g := by
-    unfold leftDualMap
-    rw [← HasLeftIhom.homEquivNaturalityₗ]
-    simp only [leval]
-    rw [← Category.assoc, tensorHom_comp_tensorHom]
-    have eval_beta :
-      (𝟙 A₂ ⊗ₘ (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f) ≫ leval A₂ = f := by
-      apply (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).injective
-      rw [HasLeftIhom.homEquivNaturalityₗ]
-      simp [leval]
-    congr 1
-    simp only [Category.id_comp, Category.comp_id]
-    change
-      g ▷ B ≫ f =
-        (g ⊗ₘ (HasLeftIhom.homEquiv B).toFun f) ≫ leval A₂
-    have htensor :
-        (g ⊗ₘ (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f) =
-          (g ⊗ₘ 𝟙 B) ≫
-            (𝟙 A₂ ⊗ₘ
-              (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f) := by
-      simp
-      simpa using
-        (tensorHom_comp_tensorHom
-          (f₁ := g)
-          (f₂ := 𝟙 B)
-          (g₁ := 𝟙 A₂)
-          (g₂ := (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f)).symm
-    rw [htensor, Category.assoc, eval_beta]
-    simp
-  have hturn :
-    leftDualMap g ≫ (t.turn A₁).hom =
-      (t.turn A₂).hom ≫ rightDualMap g := by
+  have hturn : HasLeftIhom.contramap (B := bot) g ≫ (t.turn A₁).hom =
+      (t.turn A₂).hom ≫ HasRightIhom.contramap (B := bot) g := by
+    rw [← leftDualFunctor_map_op', ← rightDualFunctor_map_op']
     exact t.turnNaturality g
-  have hright :
-    (HasRightIhom.homEquiv (A := A₁) (B := D.bot) B).toFun
-        (B ◁ g ≫
-          (HasRightIhom.homEquiv (A := A₂) (B := D.bot) B).invFun
-            ((HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f ≫ (t.turn A₂).hom)) =
-        (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f ≫ (t.turn A₂).hom ≫ rightDualMap g := by
-     unfold rightDualMap
-     rw [← HasRightIhom.homEquivNaturalityᵣ]
-     rw [← Category.assoc]
-     rw [tensorHom_comp_tensorHom]
-     simp only [Category.comp_id, Category.id_comp]
-     rw [← HasRightIhom.homEquivNaturalityᵣ]
-     congr 1
-     unfold reval
-     change B ◁ g ≫ (HasRightIhom.homEquiv B).invFun ((HasLeftIhom.homEquiv B).toFun f ≫ (t.turn A₂).hom) =
-        ((HasLeftIhom.homEquiv B).toFun f ⊗ₘ 𝟙 A₁) ≫ ((t.turn A₂).hom ⊗ₘ g) ≫
-        (HasRightIhom.homEquiv (rightDual A₂)).invFun (𝟙 (rightDual A₂))
-     sorry
-   /-
-    unfold rightDualMap
-    rw [← HasRightIhom.homEquivNaturalityᵣ]
-    rw [← HasRightIhom.homEquivNaturalityᵣ
-      (A := A₁)
-      (B := D.bot)
-      (X := B)
-      (Y := leftDual A₂)
-      (f := (HasLeftIhom.homEquiv
-        (A := A₂) (B := D.bot) B).toFun f)]
-    rw [← Category.assoc, tensorHom_comp_tensorHom]
-    rw [Category.id_comp]
-    rw [comp_tensor_id]
-    rw [tensorHom_comp_tensorHom]
-    simp only [Category.comp_id]
-    rw [HasRightIhom.homEquivNaturalityᵣ]
-    simp
-    rw [← HasRightIhom.homEquivNaturalityᵣ]
-    simp
-  -/
-  apply (HasRightIhom.homEquiv (A := A₁) (B := D.bot) B).injective
-  rw [Equiv.apply_symm_apply, hleft, Category.assoc, hturn, ← hright]
-  rfl
--/
+  show (HasRightIhom.homEquiv (A := A₁) (B := bot) B).symm
+      (HasLeftIhom.homEquiv (A := A₁) (B := bot) B (g ▷ B ≫ f) ≫ (t.turn A₁).hom) =
+    B ◁ g ≫ (HasRightIhom.homEquiv (A := A₂) (B := bot) B).symm
+      (HasLeftIhom.homEquiv (A := A₂) (B := bot) B f ≫ (t.turn A₂).hom)
+  rw [← MonoidalCategory.tensorHom_id]
+  rw [HasLeftIhom.homEquiv_naturality_left (B := bot) g f]
+  rw [Category.assoc, hturn, ← Category.assoc]
+  rw [← MonoidalCategory.id_tensorHom]
+  exact (HasRightIhom.symm_naturality_left (B := bot) g _).symm
 
-/-- The first key lemma in showing naturality in the proof that turns in dialogue categories induces wheels. -/
+/-- The second key lemma in showing naturality in the proof that turns in dialogue categories induces wheels. -/
 lemma turnToWheelNat₂ (t : Turn C) (A B₁ B₂ : C) (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot)
   : turnToWheel₁ C t A B₁ (A ◁ g ≫ f) = g ▷ A ≫ turnToWheel₁ C t A B₂ f := by
   letI := D.leftClosed
   letI := D.rightClosed
-  unfold turnToWheel₁
   sorry
 
 def wheelToTurn₁ (wheel : Wheel C) (A : C) : (leftDual A ⟶ leftDual A) ≃ (leftDual A ⟶ rightDual A) :=

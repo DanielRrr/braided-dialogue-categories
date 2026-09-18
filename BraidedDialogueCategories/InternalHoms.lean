@@ -60,17 +60,24 @@ lemma homEquiv_naturality_left {X : C} (g : A₁ ⟶ A₂) (f : A₂ ⊗ X ⟶ B
     homEquiv (A := A₁) X ((g ⊗ₘ 𝟙 X) ≫ f) =
       homEquiv (A := A₂) X f ≫ contramap g := by
   set φ := homEquiv (A := A₂) X f with hφ
-  -- goal's RHS is now literally `φ ≫ contramap g`, no `f` left in it
   have hf : f = (𝟙 A₂ ⊗ₘ φ) ≫ leftEval := by
     have h1 : (homEquiv (A := A₂) X).symm φ = (𝟙 A₂ ⊗ₘ φ) ≫ leftEval := symm_apply_eq φ
     have h2 : (homEquiv (A := A₂) X).symm φ = f := by
       rw [hφ]; exact Equiv.symm_apply_apply _ f
     rw [← h2]; exact h1
   rw [hf, ← Category.assoc, tensorHom_comp_tensorHom, Category.comp_id, Category.id_comp]
-  rw [show g ⊗ₘ φ = (𝟙 A₁ ⊗ₘ φ) ≫ (g ⊗ₘ 𝟙 (internalHomₗ A₂ B)) from by rw [tensorHom_comp_tensorHom, Category.id_comp, Category.comp_id]]
+  rw [show g ⊗ₘ φ = (𝟙 A₁ ⊗ₘ φ) ≫ (g ⊗ₘ 𝟙 (internalHomₗ A₂ B)) from by
+      rw [tensorHom_comp_tensorHom, Category.id_comp, Category.comp_id]]
   rw [Category.assoc, homEquivNaturalityₗ]
   rfl
 
+lemma symm_naturality_left {X : C} (g : A₁ ⟶ A₂) (ψ : X ⟶ internalHomₗ A₂ B) :
+    (g ⊗ₘ 𝟙 X) ≫ (homEquiv (A := A₂) X).symm ψ =
+      (homEquiv (A := A₁) X).symm (ψ ≫ contramap g) := by
+  apply (homEquiv (A := A₁) X).injective
+  rw [Equiv.apply_symm_apply]
+  rw [homEquiv_naturality_left]
+  rw [Equiv.apply_symm_apply]
 end HasLeftIhom
 
 /--
