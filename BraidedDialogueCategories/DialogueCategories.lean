@@ -10,6 +10,8 @@ universe v
 
 namespace CategoryTheory
 open MonoidalCategory
+open HasLeftIhom
+open HasRightIhom
 
 variable {C : Type v} [Category.{v} C] [MonoidalCategory.{v} C]
 
@@ -32,18 +34,14 @@ abbrev leftDual (A : C) : C :=
   HasLeftIhom.internalHomₗ A D.bot
 
 /-- The left evaluation arrow `A ⊗ [A, bot]ₗ ⟶ bot`-/
-def leval (A : C) : A ⊗ leftDual A ⟶ bot :=
+abbrev leval (A : C) : A ⊗ leftDual A ⟶ bot :=
   letI := D.leftClosed
-  (HasLeftIhom.homEquiv (A := A) (B := DialogueCategory.bot) (leftDual A)).symm (𝟙 (leftDual A))
+  HasLeftIhom.leftEval (A := A) (B := DialogueCategory.bot)
 
 /-- `leftDual` is a contravariant functor. -/
-def leftDualMap {A B : C} (f : A ⟶ B) : leftDual B ⟶ leftDual A :=
+abbrev leftDualMap {A B : C} (f : A ⟶ B) : leftDual B ⟶ leftDual A :=
   letI := D.leftClosed
-  HasLeftIhom.homEquiv
-      (A := A)
-      (B := DialogueCategory.bot)
-      (leftDual B)
-      ((f ⊗ₘ 𝟙 (leftDual B)) ≫ leval B)
+  HasLeftIhom.contramap (B := D.bot) f-- try rfl first; fallback: simp [leftDualFunctor, leftDualMap]
 
 def leftDualFunctor : Cᵒᵖ ⥤ C where
   obj A := leftDual A.unop
@@ -54,13 +52,15 @@ def leftDualFunctor : Cᵒᵖ ⥤ C where
       (B := D.bot)
       (leftDual X.unop)
       ((f.unop ⊗ₘ 𝟙 (leftDual X.unop)) ≫ leval X.unop)
-  map_id X := by
-    simp[leftDual, leval]
+  map_id X := sorry
   map_comp {A B C} f g := by
     letI := D.leftClosed
     rw [← HasLeftIhom.homEquivNaturalityₗ]
     simp[leftDual, leval]
     sorry
+
+lemma leftDualFunctor_map_op {A B : C} (f : A ⟶ B) :
+    leftDualFunctor.map f.op = leftDualMap f := rfl
 
 /-- `[A, bot]ᵣ`. -/
 abbrev rightDual (A : C) : C :=
@@ -70,13 +70,12 @@ abbrev rightDual (A : C) : C :=
 /-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
 def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
   letI := D.rightClosed
-  (HasRightIhom.homEquiv (A := A) (B := DialogueCategory.bot) (rightDual A)).symm (𝟙 (rightDual A))
+  HasRightIhom.evalRight (A := A) (B := DialogueCategory.bot)
 
 /-- `rightDual` is a contravariant functor. -/
 def rightDualMap {A B : C} (f : A ⟶ B) : rightDual B ⟶ rightDual A :=
   letI := D.rightClosed
-  HasRightIhom.homEquiv (A := A) (B := DialogueCategory.bot) (rightDual B)
-    ((𝟙 (rightDual B) ⊗ₘ f) ≫ reval B)
+  HasRightIhom.contramap (B := D.bot) f
 
 /-- `rightDual` is a contravariant functor.  -/
 def rightDualFunctor : Cᵒᵖ ⥤ C where
@@ -88,8 +87,11 @@ def rightDualFunctor : Cᵒᵖ ⥤ C where
       (B := D.bot)
       (rightDual X.unop)
       ((𝟙 (rightDual X.unop) ⊗ₘf.unop) ≫ reval X.unop)
-  map_id X := by simp[rightDual, reval]
-  map_comp {A B C} f g := by sorry
+  map_id X := sorry
+  map_comp {A B C} f g := sorry
+
+lemma rightDualFunctor_map_op {A B : C} (f : A ⟶ B) :
+    rightDualFunctor.map f.op = rightDualMap f := rfl
 
 def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
   letI := D.leftClosed
@@ -191,6 +193,24 @@ lemma turnToWheelInv₂ (t : Turn C) (A B : C) :  Function.RightInverse (turnToW
 
 /-- The first key lemma in showing naturality in the proof that turns in dialogue categories induces wheels. -/
 lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (g : A₁ ⟶ A₂) (f : A₂ ⊗ B ⟶ bot) :
+    turnToWheel₁ C t A₁ B (g ▷ B ≫ f) = B ◁ g ≫ turnToWheel₁ C t A₂ B f := by
+  letI := D.leftClosed
+  letI := D.rightClosed
+  show (HasRightIhom.homEquiv (A := A₁) (B := bot) B).symm
+      ((HasLeftIhom.homEquiv (A := A₁) (B := bot) B).toFun (g ▷ B ≫ f) ≫ (t.turn A₁).hom) =
+    B ◁ g ≫ (HasRightIhom.homEquiv (A := A₂) (B := bot) B).symm
+      ((HasLeftIhom.homEquiv (A := A₂) (B := bot) B).toFun f ≫ (t.turn A₂).hom)
+  sorry
+  /-
+  rw [show g ▷ B = g ⊗ₘ 𝟙 B from sorry]
+  rw [HasLeftIhom.homEquiv_naturality_left (B := bot) g f]
+  rw [Category.assoc, ← leftDualFunctor_map_op, t.turnNaturality g, rightDualFunctor_map_op]
+  rw [← Category.assoc]
+  rw [show B ◁ g = 𝟙 B ⊗ₘ g from sorry]
+  exact (HasRightIhom.symm_naturality_left (B := bot) g _).symm
+  -/
+/-
+lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (g : A₁ ⟶ A₂) (f : A₂ ⊗ B ⟶ bot) :
   turnToWheel₁ C t A₁ B (g ▷ B ≫ f) = B ◁ g ≫ turnToWheel₁ C t A₂ B f := by
   letI := D.leftClosed
   letI := D.rightClosed
@@ -235,12 +255,42 @@ lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (g : A₁ ⟶ A₂) (f : 
           (HasRightIhom.homEquiv (A := A₂) (B := D.bot) B).invFun
             ((HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f ≫ (t.turn A₂).hom)) =
         (HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B).toFun f ≫ (t.turn A₂).hom ≫ rightDualMap g := by
+     unfold rightDualMap
+     rw [← HasRightIhom.homEquivNaturalityᵣ]
+     rw [← Category.assoc]
+     rw [tensorHom_comp_tensorHom]
+     simp only [Category.comp_id, Category.id_comp]
+     rw [← HasRightIhom.homEquivNaturalityᵣ]
+     congr 1
+     unfold reval
+     change B ◁ g ≫ (HasRightIhom.homEquiv B).invFun ((HasLeftIhom.homEquiv B).toFun f ≫ (t.turn A₂).hom) =
+        ((HasLeftIhom.homEquiv B).toFun f ⊗ₘ 𝟙 A₁) ≫ ((t.turn A₂).hom ⊗ₘ g) ≫
+        (HasRightIhom.homEquiv (rightDual A₂)).invFun (𝟙 (rightDual A₂))
+     sorry
+   /-
     unfold rightDualMap
     rw [← HasRightIhom.homEquivNaturalityᵣ]
-    sorry
+    rw [← HasRightIhom.homEquivNaturalityᵣ
+      (A := A₁)
+      (B := D.bot)
+      (X := B)
+      (Y := leftDual A₂)
+      (f := (HasLeftIhom.homEquiv
+        (A := A₂) (B := D.bot) B).toFun f)]
+    rw [← Category.assoc, tensorHom_comp_tensorHom]
+    rw [Category.id_comp]
+    rw [comp_tensor_id]
+    rw [tensorHom_comp_tensorHom]
+    simp only [Category.comp_id]
+    rw [HasRightIhom.homEquivNaturalityᵣ]
+    simp
+    rw [← HasRightIhom.homEquivNaturalityᵣ]
+    simp
+  -/
   apply (HasRightIhom.homEquiv (A := A₁) (B := D.bot) B).injective
   rw [Equiv.apply_symm_apply, hleft, Category.assoc, hturn, ← hright]
   rfl
+-/
 
 /-- The first key lemma in showing naturality in the proof that turns in dialogue categories induces wheels. -/
 lemma turnToWheelNat₂ (t : Turn C) (A B₁ B₂ : C) (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot)
@@ -266,8 +316,19 @@ def wheelToTurn₂ (wheel : Wheel C) (A : C) : (rightDual A ⟶ rightDual A) ≃
   let leftIHomEq := HasLeftIhom.homEquiv (A := A) (B := D.bot) (rightDual A)
   Equiv.trans (Equiv.trans rightIHomEq wheelEq) leftIHomEq
 
-lemma wheelToTurnLemma₁ (wheel : Wheel C) (A : C) : (wheelToTurn₁ C wheel A) (𝟙 (leftDual A)) ≫ (wheelToTurn₂ C wheel A) (𝟙 (rightDual A)) = 𝟙 (leftDual A) := by
+lemma wheelToTurnLemma₁ (wheel : Wheel C) (A : C) :
+  (wheelToTurn₁ C wheel A) (𝟙 (leftDual A)) ≫ (wheelToTurn₂ C wheel A) (𝟙 (rightDual A)) = 𝟙 (leftDual A) := by
+  letI := D.leftClosed
   unfold wheelToTurn₁ wheelToTurn₂
+  simp
+  sorry
+
+
+lemma wheelToTurnLemma₂ (wheel : Wheel C) (A : C) :
+  (wheelToTurn₂ C wheel A) (𝟙 (rightDual A)) ≫ (wheelToTurn₁ C wheel A) (𝟙 (leftDual A)) = 𝟙 (rightDual A) := by
+  unfold wheelToTurn₁ wheelToTurn₂
+  simp
+  sorry
 
 /--
 The following establishes the equivalence between turns and wheels in any dialogue category.
@@ -304,7 +365,7 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
              (wheelToTurn₁ C w A (𝟙 (leftDual A)))
              (wheelToTurn₂ C w A (𝟙 (rightDual A)))
              (wheelToTurnLemma₁ C w A)
-             sorry
+             (wheelToTurnLemma₂ C w A)
           )
           (fun {A B} f => sorry)
   left_inv := sorry
