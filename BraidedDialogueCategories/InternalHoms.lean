@@ -78,6 +78,17 @@ lemma symm_naturality_left {X : C} (g : A₁ ⟶ A₂) (ψ : X ⟶ internalHom�
   rw [Equiv.apply_symm_apply]
   rw [homEquiv_naturality_left]
   rw [Equiv.apply_symm_apply]
+
+/-- Naturality of `(homEquiv _).symm` in the representing object (postcomposition). -/
+lemma symm_comp {X Y : C} (m : X ⟶ Y) (k : Y ⟶ internalHomₗ A B) :
+    (homEquiv X).symm (m ≫ k) = (𝟙 A ⊗ₘ m) ≫ (homEquiv Y).symm k := by
+  apply (homEquiv X).injective
+  rw [Equiv.apply_symm_apply, homEquivNaturalityₗ, Equiv.apply_symm_apply]
+
+/-- Uncurry∘curry cancels back to the original map. -/
+lemma uncurry_curry {X : C} (φ : A ⊗ X ⟶ B) :
+    (𝟙 A ⊗ₘ homEquiv X φ) ≫ leftEval = φ := by
+  rw [← symm_apply_eq, Equiv.symm_apply_apply]
 end HasLeftIhom
 
 /--
@@ -137,6 +148,14 @@ lemma symm_naturality_left {X : C} (g : A₁ ⟶ A₂) (ψ : X ⟶ internalHom�
   rw [homEquiv_naturality_left]
   rw [Equiv.apply_symm_apply]
 
+lemma symm_comp {X Y : C} (m : X ⟶ Y) (k : Y ⟶ internalHomᵣ A B) :
+    (homEquiv X).symm (m ≫ k) = (m ⊗ₘ 𝟙 A) ≫ (homEquiv Y).symm k := by
+  apply (homEquiv X).injective
+  rw [Equiv.apply_symm_apply, homEquivNaturalityᵣ, Equiv.apply_symm_apply]
+
+lemma uncurry_curry {X : C} (φ : X ⊗ A ⟶ B) :
+    (homEquiv X φ ⊗ₘ 𝟙 A) ≫ evalRight = φ := by
+  rw [← symm_apply_eq, Equiv.symm_apply_apply]
 end HasRightIhom
 
 /--
