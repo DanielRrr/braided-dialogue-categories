@@ -38,6 +38,10 @@ abbrev leval (A : C) : A ⊗ leftDual A ⟶ bot :=
   letI := D.leftClosed
   HasLeftIhom.leftEval (A := A) (B := DialogueCategory.bot)
 
+lemma leval_eq_eval (A : C) :
+  letI := D.leftClosed
+  leval A = HasLeftIhom.leftEval (A := A) (B := D.bot) := rfl
+
 /-- `leftDual` is a contravariant functor. -/
 abbrev leftDualMap {A B : C} (f : A ⟶ B) : leftDual B ⟶ leftDual A :=
   letI := D.leftClosed
@@ -295,11 +299,23 @@ lemma wheelToTurnLemma₂ (wheel : Wheel C) (A : C) :
   unfold wheelToTurn₁ wheelToTurn₂
   set wheelA := wheel.wheel A (leftDual A) (leval A) with hWheelA
   set wheelB := (wheel.wheel A (rightDual A)).symm (reval A) with hWheelB
-  -- set p : leftDual A ⟶ rightDual A :=
-  --  HasRightIhom.homEquiv (A := A) (B := bot) (leftDual A) wheelA with hp
-  -- set q : rightDual A ⟶ leftDual A :=
-  --  HasLeftIhom.homEquiv (A := A) (B := bot) (rightDual A) wheelB with hq
-  sorry
+  set p : leftDual A ⟶ rightDual A := HasRightIhom.homEquiv (A := A) (B := bot) (leftDual A) wheelA with hp
+  set q : rightDual A ⟶ leftDual A := HasLeftIhom.homEquiv (A := A) (B := bot) (rightDual A) wheelB with hq
+  show q ≫ p = 𝟙 (rightDual A)
+  apply (HasRightIhom.homEquiv (A := A) (B := bot) (rightDual A)).symm.injective
+  show (HasRightIhom.homEquiv (A := A) (B := bot) (rightDual A)).symm (q ≫ p) = reval A
+  rw [HasRightIhom.symm_comp]
+  have hp' : (HasRightIhom.homEquiv (A := A) (B := bot) (leftDual A)).symm p = wheelA := by
+    rw [Equiv.symm_apply_apply]
+  rw [hp']
+  have huncurry : (𝟙 A ⊗ₘ q) ≫ leval A = wheelB := by rw [hq, leval_eq_eval, HasLeftIhom.uncurry_curry]
+  have hnat := wheel.wheelNatInB (A := A) (B₁ := rightDual A) (B₂ := leftDual A) q (leval A)
+  rw [huncurry] at hnat
+  have hrw : wheel.wheel A (rightDual A) wheelB = reval A := by
+    rw [hWheelB, Equiv.apply_symm_apply]
+  rw [hrw] at hnat
+  exact hnat.symm
+
 /--
 The following establishes the equivalence between turns and wheels in any dialogue category.
 -/
@@ -333,8 +349,11 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
           )
           (fun {A B} f => by
             rw [rightDualFunctor_map_op', leftDualFunctor_map_op'];
-            simp
+            simp[wheelToTurn₁]
+            rw [← wheelToTurnLemma₁, ← wheelToTurnLemma₂]
             sorry
+            exact w
+            exact w
           )
   left_inv := sorry
   right_inv := sorry
