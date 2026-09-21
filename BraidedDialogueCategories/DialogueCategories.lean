@@ -51,18 +51,11 @@ def leftDualFunctor : Cᵒᵖ ⥤ C where
   obj A := leftDual A.unop
   map := fun {X Y} f =>
     letI := D.leftClosed
-    HasLeftIhom.homEquiv
-      (A := Y.unop)
-      (B := D.bot)
-      (leftDual X.unop)
-      ((f.unop ⊗ₘ 𝟙 (leftDual X.unop)) ≫ leval X.unop)
-  map_id X := sorry
+    HasLeftIhom.contramap f.unop
+  map_id X := by simp
   map_comp {A B C} f g := by
-    letI := D.leftClosed
-    rw [← HasLeftIhom.homEquivNaturalityₗ]
-    simp[leftDual, leval]
-    rw [whiskerRight, ← whiskerRight]
-    sorry
+   letI := D.leftClosed
+   simp
 
 
 lemma leftDualFunctor_map_op {A B : C} (f : A ⟶ B) :
@@ -97,13 +90,11 @@ def rightDualFunctor : Cᵒᵖ ⥤ C where
   obj A := rightDual A.unop
   map := fun {X Y} f =>
     letI := D.rightClosed
-    HasRightIhom.homEquiv
-      (A := Y.unop)
-      (B := D.bot)
-      (rightDual X.unop)
-      ((𝟙 (rightDual X.unop) ⊗ₘf.unop) ≫ reval X.unop)
-  map_id X := by sorry
-  map_comp {A B C} f g := sorry
+    HasRightIhom.contramap f.unop
+  map_id X := by simp
+  map_comp {A B C} f g := by
+    letI := D.rightClosed
+    simp
 
 lemma rightDualFunctor_map_op {A B : C} (f : A ⟶ B) :
   rightDualFunctor.map f.op = rightDualMap f := rfl
@@ -331,10 +322,9 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
               (turnToWheel₁ C t A B)
               (turnToWheel₂ C t A B)
               (turnToWheelInv₁ C t A B)
-              (turnToWheelInv₂ C t A B)
-          )
+              (turnToWheelInv₂ C t A B))
          (fun {A₁ A₂ B} (g : A₁ ⟶ A₂) (f : A₂ ⊗ B ⟶ bot) => by simp; apply turnToWheelNat₁)
-         (fun {A B₁ B₂} (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot) => by simp; apply turnToWheelNat₂ )
+         (fun {A B₁ B₂} (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot) => by simp; apply turnToWheelNat₂)
   invFun w :=
     letI := D.leftClosed
     letI := D.rightClosed
@@ -345,8 +335,7 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
              (wheelToTurn₁ C w A (𝟙 (leftDual A)))
              (wheelToTurn₂ C w A (𝟙 (rightDual A)))
              (wheelToTurnLemma₁ C w A)
-             (wheelToTurnLemma₂ C w A)
-          )
+             (wheelToTurnLemma₂ C w A))
           (fun {A B} f => by
             rw [rightDualFunctor_map_op', leftDualFunctor_map_op'];
             simp[wheelToTurn₁]

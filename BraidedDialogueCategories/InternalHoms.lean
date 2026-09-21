@@ -49,11 +49,17 @@ lemma symm_apply_eq {X : C} (k : X ⟶ internalHomₗ A B) :
   rw [Equiv.apply_symm_apply, homEquivNaturalityₗ]
   simp [leftEval]
 
-variable {A₁ A₂ : C} [HasLeftIhom A₁ B] [HasLeftIhom A₂ B]
+variable {A₁ A₂ A₃ : C} [HasLeftIhom A₁ B] [HasLeftIhom A₂ B] [HasLeftIhom A₃ B]
 
 /-- The left internal hom contramap. -/
 def contramap (g : A₁ ⟶ A₂) : internalHomₗ A₂ B ⟶ internalHomₗ A₁ B :=
   homEquiv (A := A₁) (internalHomₗ A₂ B) ((g ⊗ₘ 𝟙 _) ≫ leftEval)
+
+/-- The identity axiom is satisfied for `contramap` for the left internal homs. -/
+@[simp]
+lemma contramapId : contramap (B := B) (𝟙 A) = 𝟙 (internalHomₗ A B) := by
+  show homEquiv (A := A) (internalHomₗ A B) ((𝟙 A ⊗ₘ 𝟙 (internalHomₗ A B)) ≫ leftEval) = 𝟙 _
+  simp [leftEval]
 
 /-- The naturality square `hleft` was reconstructing by hand. -/
 lemma homEquiv_naturality_left {X : C} (g : A₁ ⟶ A₂) (f : A₂ ⊗ X ⟶ B) :
@@ -70,6 +76,13 @@ lemma homEquiv_naturality_left {X : C} (g : A₁ ⟶ A₂) (f : A₂ ⊗ X ⟶ B
       rw [tensorHom_comp_tensorHom, Category.id_comp, Category.comp_id]]
   rw [Category.assoc, homEquivNaturalityₗ]
   rfl
+
+/-- The composition axiom is satisfied for `contramap` for the left internal homs. -/
+@[simp]
+lemma contramapComp (f₁ : A₁ ⟶ A₂) (f₂ : A₂ ⟶ A₃) :
+  contramap (f₁ ≫ f₂) = contramap (B := B) f₂ ≫ contramap f₁ := by
+  have h := homEquiv_naturality_left (A₁ := A₁) (A₂ := A₂) (B := B) f₁ ((f₂ ⊗ₘ 𝟙 (internalHomₗ A₃ B)) ≫ leftEval)
+  simpa [contramap] using h
 
 lemma symm_naturality_left {X : C} (g : A₁ ⟶ A₂) (ψ : X ⟶ internalHomₗ A₂ B) :
     (g ⊗ₘ 𝟙 X) ≫ (homEquiv (A := A₂) X).symm ψ =
@@ -121,10 +134,16 @@ lemma symm_apply_eq {X : C} (k : X ⟶ internalHomᵣ A B) :
   rw [Equiv.apply_symm_apply, homEquivNaturalityᵣ]
   simp [evalRight]
 
-variable {A₁ A₂ : C} [HasRightIhom A₁ B] [HasRightIhom A₂ B]
+variable {A₁ A₂ A₃ : C} [HasRightIhom A₁ B] [HasRightIhom A₂ B] [HasRightIhom A₃ B]
 
 def contramap (g : A₁ ⟶ A₂) : internalHomᵣ A₂ B ⟶ internalHomᵣ A₁ B :=
   homEquiv (A := A₁) (internalHomᵣ A₂ B) ((𝟙 _ ⊗ₘ g) ≫ evalRight)
+
+/-- The identity axiom is satisfied for `contramap` for the left internal homs. -/
+@[simp]
+lemma contramapId : contramap (B := B) (𝟙 A) = 𝟙 (internalHomᵣ A B) := by
+  show homEquiv (A := A) (internalHomᵣ A B) ((𝟙 (internalHomᵣ A B) ⊗ₘ 𝟙 A) ≫ evalRight) = 𝟙 _
+  simp [evalRight]
 
 lemma homEquiv_naturality_left {X : C} (g : A₁ ⟶ A₂) (f : X ⊗ A₂ ⟶ B) :
     homEquiv (A := A₁) X ((𝟙 X ⊗ₘ g) ≫ f) =
@@ -140,13 +159,18 @@ lemma homEquiv_naturality_left {X : C} (g : A₁ ⟶ A₂) (f : X ⊗ A₂ ⟶ B
   rw [Category.assoc, homEquivNaturalityᵣ]
   rfl
 
+/-- The composition axiom is satisfied for `contramap` for the left internal homs. -/
+@[simp]
+lemma contramapComp (f₁ : A₁ ⟶ A₂) (f₂ : A₂ ⟶ A₃) :
+  contramap (f₁ ≫ f₂) = contramap (B := B) f₂ ≫ contramap f₁ := by
+  have h := homEquiv_naturality_left (A₁ := A₁) (A₂ := A₂) (B := B) f₁ ((𝟙 (internalHomᵣ A₃ B) ⊗ₘ f₂) ≫ evalRight)
+  simpa [contramap] using h
+
 lemma symm_naturality_left {X : C} (g : A₁ ⟶ A₂) (ψ : X ⟶ internalHomᵣ A₂ B) :
     (𝟙 X ⊗ₘ g) ≫ (homEquiv (A := A₂) X).symm ψ =
       (homEquiv (A := A₁) X).symm (ψ ≫ contramap g) := by
   apply (homEquiv (A := A₁) X).injective
-  rw [Equiv.apply_symm_apply]
-  rw [homEquiv_naturality_left]
-  rw [Equiv.apply_symm_apply]
+  rw [Equiv.apply_symm_apply, homEquiv_naturality_left, Equiv.apply_symm_apply]
 
 lemma symm_comp {X Y : C} (m : X ⟶ Y) (k : Y ⟶ internalHomᵣ A B) :
     (homEquiv X).symm (m ≫ k) = (m ⊗ₘ 𝟙 A) ≫ (homEquiv Y).symm k := by
