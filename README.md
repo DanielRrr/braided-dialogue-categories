@@ -10,7 +10,7 @@ there are internal homs $[A, \bot]_l$ and $[A, \bot]_r$.
 
 In this library, I first of all try to formalise the basic concepts related to dialogue category. A dialogue category itself
 is defined as a typeclass:
-```
+```lean 4
 class DialogueCategory (C : Type v) [Category.{v} C] [MonoidalCategory C] where
   bot : C
   [leftClosed : LeftClosedAt bot]
