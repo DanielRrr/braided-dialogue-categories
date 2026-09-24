@@ -102,6 +102,11 @@ lemma symm_comp {X Y : C} (m : X ⟶ Y) (k : Y ⟶ internalHomₗ A B) :
 lemma uncurry_curry {X : C} (φ : A ⊗ X ⟶ B) :
     (𝟙 A ⊗ₘ homEquiv X φ) ≫ leftEval = φ := by
   rw [← symm_apply_eq, Equiv.symm_apply_apply]
+
+lemma contramapEval (f : A₁ ⟶ A₂) :
+    (𝟙 A₁ ⊗ₘ contramap (B := B) f) ≫  leftEval = (f ⊗ₘ 𝟙 (internalHomₗ A₂ B)) ≫ leftEval :=
+  uncurry_curry ((f ⊗ₘ 𝟙 (internalHomₗ A₂ B)) ≫ leftEval)
+
 end HasLeftIhom
 
 /--

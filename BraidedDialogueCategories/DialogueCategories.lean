@@ -43,10 +43,6 @@ lemma leval_eq_eval (A : C) :
   leval A = HasLeftIhom.leftEval (A := A) (B := D.bot) := rfl
 
 /-- `leftDual` is a contravariant functor. -/
-abbrev leftDualMap {A B : C} (f : A ⟶ B) : leftDual B ⟶ leftDual A :=
-  letI := D.leftClosed
-  HasLeftIhom.contramap (B := D.bot) f-- try rfl first; fallback: simp [leftDualFunctor, leftDualMap]
-
 def leftDualFunctor : Cᵒᵖ ⥤ C where
   obj A := leftDual A.unop
   map := fun {X Y} f =>
@@ -56,15 +52,6 @@ def leftDualFunctor : Cᵒᵖ ⥤ C where
   map_comp {A B C} f g := by
    letI := D.leftClosed
    simp
-
-
-lemma leftDualFunctor_map_op {A B : C} (f : A ⟶ B) :
-  leftDualFunctor.map f.op = leftDualMap f := rfl
-
-lemma leftDualFunctor_map_op' {A B : C} (f : A ⟶ B) :
-  letI := D.leftClosed
-  leftDualFunctor.map f.op = HasLeftIhom.contramap (B := D.bot) f := rfl
-
 
 /-- `[A, bot]ᵣ`. -/
 abbrev rightDual (A : C) : C :=
@@ -80,11 +67,6 @@ lemma reval_eq_eval (A : C) :
   letI := D.rightClosed
   reval A = HasRightIhom.evalRight (A := A) (B := D.bot) := rfl
 
-/-- `rightDual` is a contravariant functor. -/
-def rightDualMap {A B : C} (f : A ⟶ B) : rightDual B ⟶ rightDual A :=
-  letI := D.rightClosed
-  HasRightIhom.contramap (B := D.bot) f
-
 /-- `rightDual` is a contravariant functor.  -/
 def rightDualFunctor : Cᵒᵖ ⥤ C where
   obj A := rightDual A.unop
@@ -95,13 +77,6 @@ def rightDualFunctor : Cᵒᵖ ⥤ C where
   map_comp {A B C} f g := by
     letI := D.rightClosed
     simp
-
-lemma rightDualFunctor_map_op {A B : C} (f : A ⟶ B) :
-  rightDualFunctor.map f.op = rightDualMap f := rfl
-
-lemma rightDualFunctor_map_op' {A B : C} (f : A ⟶ B) :
-  letI := D.rightClosed
-  rightDualFunctor.map f.op = HasRightIhom.contramap (B := D.bot) f := rfl
 
 def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
   letI := D.leftClosed
@@ -208,7 +183,6 @@ lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (g : A₁ ⟶ A₂) (f : 
   letI := D.rightClosed
   have hturn : HasLeftIhom.contramap (B := bot) g ≫ (t.turn A₁).hom =
       (t.turn A₂).hom ≫ HasRightIhom.contramap (B := bot) g := by
-    rw [← leftDualFunctor_map_op', ← rightDualFunctor_map_op']
     exact t.turnNaturality g
   show (HasRightIhom.homEquiv (A := A₁) (B := bot) B).symm
       (HasLeftIhom.homEquiv (A := A₁) (B := bot) B (g ▷ B ≫ f) ≫ (t.turn A₁).hom) =
@@ -225,8 +199,7 @@ lemma turnToWheelNat₂ (t : Turn C) (A B₁ B₂ : C) (g : B₁ ⟶ B₂) (f : 
   show
     (HasRightIhom.homEquiv (A := A) (B := bot) B₁).symm
       ((HasLeftIhom.homEquiv (A := A) (B := bot) B₁)
-        (A ◁ g ≫ f) ≫ (t.turn A).hom) =
-    g ▷ A ≫
+        (A ◁ g ≫ f) ≫ (t.turn A).hom) = g ▷ A ≫
       (HasRightIhom.homEquiv (A := A) (B := bot) B₂).symm
         ((HasLeftIhom.homEquiv (A := A) (B := bot) B₂) f ≫
           (t.turn A).hom)
@@ -337,18 +310,54 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
              (wheelToTurnLemma₁ C w A)
              (wheelToTurnLemma₂ C w A))
           (fun {A B} f => by
-            rw [rightDualFunctor_map_op', leftDualFunctor_map_op'];
-            simp[wheelToTurn₁]
-            rw [← wheelToTurnLemma₁, ← wheelToTurnLemma₂]
-            sorry
-            exact w
-            exact w
+            letI := D.leftClosed
+            letI := D.rightClosed
+            show HasLeftIhom.contramap (B := bot) f ≫
+                   HasRightIhom.homEquiv
+                     (A := B)
+                     (B := bot)
+                     (leftDual B)
+                     (w.wheel B (leftDual B) (leval B)) =
+                  HasRightIhom.homEquiv
+                     (A := A)
+                     (B := bot)
+                     (leftDual A)
+                     (w.wheel A (leftDual A) (leval A)) ≫
+                    HasRightIhom.contramap (B := bot) f
+            set wheelB := w.wheel B (leftDual B) (leval B) with hwheelB
+            set wheelA := w.wheel A (leftDual A) (leval A) with hwheelA
+            set turnB := HasRightIhom.homEquiv (A := B) (B := bot) (leftDual B) wheelB with hturnB
+            set turnA := HasRightIhom.homEquiv (A := A) (B := bot) (leftDual A) wheelA with hturnA
+            show HasLeftIhom.contramap (B := bot) f ≫ turnB = turnA ≫ HasRightIhom.contramap (B := bot) f
+            apply (HasRightIhom.homEquiv (A := B) (B := bot) (leftDual A)).symm.injective
+            rw [HasRightIhom.symm_comp, HasRightIhom.symm_comp]
+            have hturnB' : (HasRightIhom.homEquiv (A := B) (B := bot) (leftDual B)).symm turnB = wheelB := by
+              rw [hturnB, Equiv.symm_apply_apply]
+            have hcontramapR' : HasRightIhom.contramap (B := bot) f = HasRightIhom.homEquiv (A := B) (B := bot) (rightDual A)
+               ((𝟙 (rightDual A) ⊗ₘ f) ≫ reval A) := by rfl
+            have hcontramapR :
+                 (HasRightIhom.homEquiv (A := B) (B := bot) (rightDual A)).symm
+                 (HasRightIhom.contramap (B := bot) f) = (𝟙 (rightDual A) ⊗ₘ f) ≫ reval A := by simp [hcontramapR']
+            rw [hturnB', hcontramapR, ← Category.assoc, tensorHom_comp_tensorHom, Category.id_comp, Category.comp_id]
+            have hreval : (turnA ⊗ₘ 𝟙 A) ≫ reval A = wheelA := by rw [hturnA]; exact HasRightIhom.uncurry_curry wheelA
+            have turnReval : (turnA ⊗ₘ f) ≫ reval A = (𝟙 (leftDual A) ⊗ₘ f) ≫ (turnA ⊗ₘ 𝟙 A) ≫ reval A :=
+              by rw [← Category.assoc, tensorHom_comp_tensorHom, Category.id_comp, Category.comp_id]
+            rw [turnReval, hreval, hwheelB]
+            have leftContraWheel :
+              (HasLeftIhom.contramap (B := bot) f ⊗ₘ 𝟙 B) ≫ w.wheel B (leftDual B) (leval B) =
+                w.wheel B (leftDual A) ((𝟙 B ⊗ₘ HasLeftIhom.contramap (B := bot) f) ≫ leval B) := by
+              exact (w.wheelNatInB (HasLeftIhom.contramap (B := bot) f) (leval B)).symm
+            rw [leftContraWheel, HasLeftIhom.contramapEval f, w.wheelNatInA f (leval A), hwheelA]
           )
   left_inv := sorry
   right_inv := sorry
 
-class PivotalDialogueCategory (C : Type v) [Category.{v} C] [MonoidalCategory C] [DialogueCategory C] where
+class PivotalDialogueCategory (C : Type v) [Category.{v} C] [MonoidalCategory C] [D : DialogueCategory C] where
     pivotalTurn : Wheel C
+    pivotalCoherence : ∀ X Y Z : C,
+      (pivotalTurn.wheel X (Y ⊗ Z)).trans (CategoryTheory.Iso.homFromEquiv (C := C) (associator Y Z X) (Z := D.bot).trans (pivotalTurn.wheel Y (Z ⊗ X))) =
+      CategoryTheory.Iso.homFromEquiv (C := C) ((associator X Y Z).symm) (Z := D.bot).trans
+        ((pivotalTurn.wheel (X ⊗ Y) Z).trans (CategoryTheory.Iso.homFromEquiv (C := C) ((associator Z X Y).symm) (Z := D.bot)))
 
 end DialogueCategory
 
