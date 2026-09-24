@@ -1,7 +1,6 @@
 module
 
 public import Mathlib.CategoryTheory.Monoidal.Category
-public import Mathlib.CategoryTheory.Yoneda
 public import BraidedDialogueCategories.InternalHoms
 
 @[expose] public section
@@ -351,14 +350,6 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
           )
   left_inv := sorry
   right_inv := sorry
-
-class PivotalDialogueCategory (C : Type v) [Category.{v} C] [MonoidalCategory C] [D : DialogueCategory C] where
-    pivotalTurn : Wheel C
-    pivotalCoherence : ∀ X Y Z : C,
-      (pivotalTurn.wheel X (Y ⊗ Z)).trans (CategoryTheory.Iso.homFromEquiv (C := C) (associator Y Z X) (Z := D.bot).trans (pivotalTurn.wheel Y (Z ⊗ X))) =
-      CategoryTheory.Iso.homFromEquiv (C := C) ((associator X Y Z).symm) (Z := D.bot).trans
-        ((pivotalTurn.wheel (X ⊗ Y) Z).trans (CategoryTheory.Iso.homFromEquiv (C := C) ((associator Z X Y).symm) (Z := D.bot)))
-
 end DialogueCategory
 
 open DialogueCategory in
