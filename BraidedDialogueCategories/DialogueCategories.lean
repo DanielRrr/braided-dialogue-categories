@@ -1,6 +1,7 @@
 module
 
 public import Mathlib.CategoryTheory.Monoidal.Category
+
 public import BraidedDialogueCategories.InternalHoms
 
 @[expose] public section
@@ -348,8 +349,12 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
               exact (w.wheelNatInB (HasLeftIhom.contramap (B := bot) f) (leval B)).symm
             rw [leftContraWheel, HasLeftIhom.contramapEval f, w.wheelNatInA f (leval A), hwheelA]
           )
-  left_inv := sorry
-  right_inv := sorry
+  left_inv turn := by
+    unfold turnToWheel₁ turnToWheel₂ wheelToTurn₁ wheelToTurn₂
+    simp
+  right_inv wheel := by
+    unfold wheelToTurn₁ wheelToTurn₂ turnToWheel₁ turnToWheel₂
+    sorry
 end DialogueCategory
 
 open DialogueCategory in
