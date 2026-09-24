@@ -145,6 +145,7 @@ structure Turn (C : Type v) [Category.{v} C] [MonoidalCategory.{v} C] [DialogueC
   turnNaturality : ∀ {A B : C} (f : B ⟶ A),
     leftDualFunctor.map f.op ≫ (turn B).hom = (turn A).hom ≫ rightDualFunctor.map f.op
 
+@[ext]
 structure Wheel (C : Type v) [Category.{v} C] [MonoidalCategory C] [DialogueCategory.{v} C] where
   wheel : ∀ (A B : C), (A ⊗ B ⟶ bot) ≃ (B ⊗ A ⟶ bot)
   wheelNatInA : ∀ {A₁ A₂ B : C} (f : A₁ ⟶ A₂) (g : A₂ ⊗ B ⟶ bot),
@@ -280,15 +281,8 @@ lemma wheelToTurnLemma₂ (wheel : Wheel C) (A : C) :
   rw [hrw] at hnat
   exact hnat.symm
 
-/--
-The following establishes the equivalence between turns and wheels in any dialogue category.
--/
-def TurnEquivWheel : Turn C ≃ Wheel C where
-  toFun t :=
-    letI := D.leftClosed
-    letI := D.rightClosed
-    match t with
-      | { turn, turnNaturality } =>
+abbrev wheelToTurn : Turn C → Wheel C
+  | t@{ turn, turnNaturality } =>
         Wheel.mk
          (fun A B =>
             Equiv.mk
@@ -298,6 +292,11 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
               (turnToWheelInv₂ C t A B))
          (fun {A₁ A₂ B} (g : A₁ ⟶ A₂) (f : A₂ ⊗ B ⟶ bot) => by simp; apply turnToWheelNat₁)
          (fun {A B₁ B₂} (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot) => by simp; apply turnToWheelNat₂)
+/--
+The following establishes the equivalence between turns and wheels in any dialogue category.
+-/
+def TurnEquivWheel : Turn C ≃ Wheel C where
+  toFun t := wheelToTurn C t
   invFun w :=
     letI := D.leftClosed
     letI := D.rightClosed
@@ -350,11 +349,24 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
             rw [leftContraWheel, HasLeftIhom.contramapEval f, w.wheelNatInA f (leval A), hwheelA]
           )
   left_inv turn := by
-    unfold turnToWheel₁ turnToWheel₂ wheelToTurn₁ wheelToTurn₂
+    unfold wheelToTurn turnToWheel₁ turnToWheel₂ wheelToTurn₁ wheelToTurn₂
     simp
   right_inv wheel := by
-    unfold wheelToTurn₁ wheelToTurn₂ turnToWheel₁ turnToWheel₂
-    sorry
+    ext A B f
+    letI := D.leftClosed
+    letI := D.rightClosed
+    show (HasRightIhom.homEquiv (A := A) (B := bot) B).symm (HasLeftIhom.homEquiv (A := A) (B := bot) B f ≫
+        wheelToTurn₁ C wheel A (𝟙 (leftDual A))) = wheel.wheel A B f
+    set fromBtoLeftDualA := HasLeftIhom.homEquiv (A := A) (B := bot) B f with hk
+    set wheelA := wheel.wheel A (leftDual A) (leval A) with hwheelA
+    set turnA := HasRightIhom.homEquiv (A := A) (B := bot) (leftDual A) wheelA with hturnA
+    have hturnAeq : wheelToTurn₁ C wheel A (𝟙 (leftDual A)) = turnA := rfl
+    rw [hturnAeq]
+    have hf : f = (𝟙 A ⊗ₘ fromBtoLeftDualA) ≫ leval A := (HasLeftIhom.uncurry_curry f).symm
+    have wheelf : wheel.wheel A B f = (fromBtoLeftDualA ⊗ₘ 𝟙 A) ≫ wheelA := by rw [hf]; exact wheel.wheelNatInB fromBtoLeftDualA (leval A)
+    have wheelReval : wheelA = (turnA ⊗ₘ 𝟙 A) ≫ reval A := by rw [hturnA]; exact (HasRightIhom.uncurry_curry wheelA).symm
+    rw [wheelf, wheelReval, ← Category.assoc, tensorHom_comp_tensorHom, Category.comp_id]
+    exact HasRightIhom.symm_apply_eq (fromBtoLeftDualA ≫ turnA)
 end DialogueCategory
 
 open DialogueCategory in
