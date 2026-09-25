@@ -255,7 +255,7 @@ lemma nameConnectedWithTurn (A B : C) [p : PrepivotalCategory C] (f : A ⊗ B �
   ((lev B A) ⊗ₘ 𝟙 A) ≫
   ((p.turn.turn A).hom ⊗ₘ 𝟙 A) ≫ reval A := by
   letI := D.leftClosed
-  rw [turnToWheel₁]
+  letI := D.rightClosed
   simp
   slice_rhs 2 3 => rw [associator_inv_naturality_middle B (leftName (A ⊗ B) f) A]
   rw [Category.assoc, Category.assoc, Category.assoc]
@@ -272,7 +272,13 @@ lemma nameConnectedWithTurn (A B : C) [p : PrepivotalCategory C] (f : A ⊗ B �
     = (α_ A B (𝟙_ C)).inv ≫ (𝟙 (A ⊗ B) ⊗ₘ leftName (A ⊗ B) f) := by simp
   slice_rhs 2 3 => rw [← Category.assoc, fact'', Category.assoc, fact']
   slice_rhs 2 3 => congr; rw [← Category.assoc, ← whiskerLeft_rightUnitor]
-  sorry
+  have idWhisker : A ◁ (ρ_ B).hom = 𝟙 A ⊗ₘ (ρ_ B).hom := by simp
+  slice_rhs 2 3 => rw [idWhisker, HasLeftIhom.homEquivNaturalityₗ]
+  simp; unfold turnToWheel₁ reval; simp
+  have fact''' := comp_whiskerRight ((HasLeftIhom.homEquiv B) f) (PrepivotalCategory.turn.turn A).hom A
+  rw [← Category.assoc, ← fact''']
+  rw [HasRightIhom.symm_apply_eq]
+  simp
 
 lemma wheel_via_turn_evals (A : C) [p : PrepivotalCategory C] :
   turnToWheel₁ C p.turn A (leftDual A) (leval A) =
