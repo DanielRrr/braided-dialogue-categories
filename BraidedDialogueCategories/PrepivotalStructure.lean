@@ -266,18 +266,16 @@ lemma nameConnectedWithTurn (A B : C) [p : PrepivotalCategory C] (f : A ⊗ B �
   slice_rhs 2 3 => rw [fact]
   unfold lev
   rw [← HasLeftIhom.homEquivNaturalityₗ]
-  have fact' := leftNameUncurry (A ⊗ B) f
-  -- have fact' : B ◁ leftName (A ⊗ B) f ≫ lev B A = (ρ_ (A ⊗ B)).hom ≫ f ≫ lev B A := by sorry
   have fact'' : (𝟙 A ⊗ₘ B ◁ leftName (A ⊗ B) f) ≫ (α_ A B (leftDual (A ⊗ B))).inv
     = (α_ A B (𝟙_ C)).inv ≫ (𝟙 (A ⊗ B) ⊗ₘ leftName (A ⊗ B) f) := by simp
-  slice_rhs 2 3 => rw [← Category.assoc, fact'', Category.assoc, fact']
-  slice_rhs 2 3 => congr; rw [← Category.assoc, ← whiskerLeft_rightUnitor]
+  slice_rhs 2 3 =>
+    rw [← Category.assoc, fact'', Category.assoc, leftNameUncurry (A ⊗ B) f]
+    congr
+    rw [← Category.assoc, ← whiskerLeft_rightUnitor]
   have idWhisker : A ◁ (ρ_ B).hom = 𝟙 A ⊗ₘ (ρ_ B).hom := by simp
   slice_rhs 2 3 => rw [idWhisker, HasLeftIhom.homEquivNaturalityₗ]
   simp; unfold turnToWheel₁ reval; simp
-  have fact''' := comp_whiskerRight ((HasLeftIhom.homEquiv B) f) (PrepivotalCategory.turn.turn A).hom A
-  rw [← Category.assoc, ← fact''']
-  rw [HasRightIhom.symm_apply_eq]
+  rw [← Category.assoc, ← comp_whiskerRight ((HasLeftIhom.homEquiv B) f) (PrepivotalCategory.turn.turn A).hom A, HasRightIhom.symm_apply_eq]
   simp
 
 lemma wheel_via_turn_evals (A : C) [p : PrepivotalCategory C] :
