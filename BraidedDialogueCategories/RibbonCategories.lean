@@ -1,8 +1,6 @@
 module
 
 public import Mathlib.CategoryTheory.Monoidal.Category
-public import Mathlib.CategoryTheory.Monoidal.Closed.Basic
-public import Mathlib.CategoryTheory.Category.Basic
 public import Mathlib.CategoryTheory.Monoidal.Braided.Basic
 
 @[expose] public section

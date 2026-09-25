@@ -17,16 +17,14 @@ variable {C : Type v} [Category.{v} C] [MonoidalCategory.{v} C]
 
 /--
 `[A, B]ₗ` exists if the functor `X ↦ X ⊗ A`
-has a representing object for morphisms into `B`. Equivalently, there is an object `H` such that
-`Hom(X ⊗ A, B) ≃ Hom(X, H)` naturally in `X`.
+has a representing object for morphisms into `B`. Equivalently, there is an object `H` such that `Hom(X ⊗ A, B) ≃ Hom(X, H)` naturally in `X`.
 -/
 class HasLeftIhom (A B : C) where
   internalHomₗ : C
   homEquiv : ∀ X : C, (A ⊗ X ⟶ B) ≃ (X ⟶ internalHomₗ)
   homEquivNaturalityₗ :
     ∀ {X Y : C} (f : X ⟶ Y) (g : A ⊗ Y ⟶ B),
-      homEquiv X ((𝟙 A ⊗ₘ f) ≫ g) =
-        f ≫ homEquiv Y g
+      homEquiv X ((𝟙 A ⊗ₘ f) ≫ g) = f ≫ homEquiv Y g
 
 /--
 The left internal hom `[A, B]ₗ`.
