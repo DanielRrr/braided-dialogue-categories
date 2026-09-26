@@ -14,7 +14,7 @@ namespace DialogueCategory
 structure Turn (C : Type v) [Category.{v} C] [MonoidalCategory.{v} C] [DialogueCategory.{v} C] where
   turn : ∀ A : C, leftDual A ≅ rightDual A
   turnNaturality : ∀ {A B : C} (f : B ⟶ A),
-    leftDualFunctor.map f.op ≫ (turn B).hom = (turn A).hom ≫ rightDualFunctor.map f.op
+    Lop.map f.op ≫ (turn B).hom = (turn A).hom ≫ R.map f.op
 
 class PrepivotalCategory (C : Type v) [Category.{v} C] [MonoidalCategory.{v} C] [DialogueCategory.{v} C] where
   turn : Turn C
@@ -270,7 +270,6 @@ lemma nameConnectedWithTurn (A B : C) [p : PrepivotalCategory C] (f : A ⊗ B �
     = (α_ A B (𝟙_ C)).inv ≫ (𝟙 (A ⊗ B) ⊗ₘ leftName (A ⊗ B) f) := by simp
   slice_rhs 2 3 =>
     rw [← Category.assoc, fact'', Category.assoc, leftNameUncurry (A ⊗ B) f]
-    congr
     rw [← Category.assoc, ← whiskerLeft_rightUnitor]
   have idWhisker : A ◁ (ρ_ B).hom = 𝟙 A ⊗ₘ (ρ_ B).hom := by simp
   slice_rhs 2 3 => rw [idWhisker, HasLeftIhom.homEquivNaturalityₗ]
@@ -281,11 +280,14 @@ lemma nameConnectedWithTurn (A B : C) [p : PrepivotalCategory C] (f : A ⊗ B �
 lemma wheel_via_turn_evals (A : C) [p : PrepivotalCategory C] :
   turnToWheel₁ C p.turn A (leftDual A) (leval A) =
   ((p.turn.turn A).hom ⊗ₘ 𝟙 A) ≫ reval A := by
-  rw [nameConnectedWithTurn]
-  have ident :
-    ((ρ_ (leftDual A)).inv ⊗ₘ 𝟙 A) ≫
-    ((𝟙 (leftDual A) ⊗ₘ leftName (A ⊗ leftDual A) (leval A)) ⊗ₘ 𝟙 A) ≫
-      (lev (leftDual A) A ⊗ₘ 𝟙 A) = 𝟙 (leftDual A ⊗ A) := by sorry
-  sorry
+  letI := D.leftClosed
+  letI := D.rightClosed
+  show (HasRightIhom.homEquiv (A := A) (B := bot) (leftDual A)).symm
+      (HasLeftIhom.homEquiv (A := A) (B := bot) (leftDual A) (leval A) ≫ (p.turn.turn A).hom) =
+    ((p.turn.turn A).hom ⊗ₘ 𝟙 A) ≫ reval A
+  have hcurry : HasLeftIhom.homEquiv (A := A) (B := bot) (leftDual A) (leval A) = 𝟙 (leftDual A) :=
+    Equiv.apply_symm_apply _ _
+  rw [hcurry, Category.id_comp, HasRightIhom.symm_apply_eq]
+  simp; rfl
 
 end DialogueCategory

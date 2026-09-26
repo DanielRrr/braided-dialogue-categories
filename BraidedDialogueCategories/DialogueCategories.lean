@@ -33,6 +33,11 @@ abbrev leftDual (A : C) : C :=
   letI := D.leftClosed
   HasLeftIhom.internalHomₗ A D.bot
 
+/-- `[A, bot]ᵣ`. -/
+abbrev rightDual (A : C) : C :=
+  letI := D.rightClosed
+  HasRightIhom.internalHomᵣ A D.bot
+
 /-- The left evaluation arrow `A ⊗ [A, bot]ₗ ⟶ bot`-/
 abbrev leval (A : C) : A ⊗ leftDual A ⟶ bot :=
   letI := D.leftClosed
@@ -43,20 +48,42 @@ lemma leval_eq_eval (A : C) :
   leval A = HasLeftIhom.leftEval (A := A) (B := D.bot) := rfl
 
 /-- `leftDual` is a contravariant functor. -/
-def leftDualFunctor : Cᵒᵖ ⥤ C where
+def L : C ⥤ Cᵒᵖ where
+  obj A := Opposite.op (leftDual A)
+  map {A B} f :=
+    letI := D.leftClosed
+    (HasLeftIhom.contramap (B := D.bot) f).op
+  map_id A := by simp
+  map_comp {A B C} f g := by letI := D.leftClosed; simp
+
+/-- `leftDual` is a contravariant functor. It's called L^op in Melliés's manuscript. -/
+def Lop : Cᵒᵖ ⥤ C where
   obj A := leftDual A.unop
   map := fun {X Y} f =>
     letI := D.leftClosed
     HasLeftIhom.contramap f.unop
-  map_id X := by simp
+  map_id A := by simp
   map_comp {A B C} f g := by
    letI := D.leftClosed
    simp
 
-/-- `[A, bot]ᵣ`. -/
-abbrev rightDual (A : C) : C :=
-  letI := D.rightClosed
-  HasRightIhom.internalHomᵣ A D.bot
+/-- `rightDual` is a contravariant functor. It's called `R` in Melliés's manuscript. -/
+def R : Cᵒᵖ ⥤ C where
+  obj A := rightDual A.unop
+  map {X Y} f :=
+     letI := D.rightClosed
+     HasRightIhom.contramap f.unop        -- f.unop : Y.unop ⟶ X.unop, purely in C
+  map_id A := by simp
+  map_comp f g := by letI := D.rightClosed; simp
+
+def Rop : C ⥤ Cᵒᵖ where
+  obj A := Opposite.op (rightDual A)
+  map {A B} f :=
+    letI := D.rightClosed
+    (HasRightIhom.contramap (B := D.bot) f).op
+  map_id A := by simp
+  map_comp f g := by letI := D.rightClosed; simp
+
 
 /-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
 def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
@@ -66,17 +93,6 @@ def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
 lemma reval_eq_eval (A : C) :
   letI := D.rightClosed
   reval A = HasRightIhom.evalRight (A := A) (B := D.bot) := rfl
-
-/-- `rightDual` is a contravariant functor.  -/
-def rightDualFunctor : Cᵒᵖ ⥤ C where
-  obj A := rightDual A.unop
-  map := fun {X Y} f =>
-    letI := D.rightClosed
-    HasRightIhom.contramap f.unop
-  map_id X := by simp
-  map_comp {A B C} f g := by
-    letI := D.rightClosed
-    simp
 
 def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
   letI := D.leftClosed
