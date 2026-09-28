@@ -109,6 +109,31 @@ lemma adjNatRight {A B₁ B₂ : C} (f : B₁ ⟶ leftDual A) (g : B₂ ⟶ B₁
   letI := D.rightClosed
   rw [HasLeftIhom.symm_comp, HasRightIhom.homEquiv_naturality_left]
 
+lemma leftEquiv_rightEquiv_symm_comp {A₁ A₂ B : C}
+    (f : A₁ ⟶ A₂) (g : A₂ ⟶ rightDual B) :
+    letI := D.leftClosed
+    letI := D.rightClosed
+    HasLeftIhom.homEquiv (A := A₁) B ((HasRightIhom.homEquiv (A := B) A₁).symm (f ≫ g)) =
+      HasLeftIhom.homEquiv (A := A₂) B
+        ((HasRightIhom.homEquiv (A := B) A₂).symm g) ≫
+        HasLeftIhom.contramap f := by
+  letI := D.leftClosed
+  letI := D.rightClosed
+  rw [HasRightIhom.symm_comp, HasLeftIhom.homEquiv_naturality_left]
+
+lemma rightEquiv_leftEquiv_symm_comp {A₁ A₂ B : C}
+    (f : A₂ ⟶ leftDual B) (g : A₁ ⟶ A₂) :
+    letI := D.leftClosed
+    letI := D.rightClosed
+    HasRightIhom.homEquiv (A := A₁) B
+        ((HasLeftIhom.homEquiv (A := B) A₁).symm (g ≫ f)) =
+      HasRightIhom.homEquiv (A := A₂) B
+        ((HasLeftIhom.homEquiv (A := B) A₂).symm f) ≫
+        HasRightIhom.contramap g := by
+  letI := D.leftClosed
+  letI := D.rightClosed
+  rw [HasLeftIhom.symm_comp, HasRightIhom.homEquiv_naturality_left]
+
 def dialogueHomEquiv (A : C) (B : Cᵒᵖ) : (L.obj A ⟶ B) ≃ (A ⟶ R.obj B) :=
   letI := D.leftClosed
   letI := D.rightClosed
@@ -125,22 +150,30 @@ def dialogueAdjunction : L (C := C) ⊣ R :=
         intros A₁ A₂ B f g
         exact congrArg Quiver.Hom.op (adjNatLeft (A₁ := A₂) (A₂ := A₁) B.unop f g)
       homEquiv_naturality_right := by
-        intros A B₁ B₂ f g
-        exact adjNatRight (A := A) (B₁ := B₁.unop) (B₂ := B₂.unop) f.unop g.unop
+        intros A B₁ B₂ f g; apply adjNatRight
     }
 
 
-def dialogueHomEquivOp (A : Cᵒᵖ) (B : C) : (Lop.obj A ⟶ B) ≃ (A ⟶ Rop.obj B) :=
+def dialogueHomEquivOp (A : C) (B : Cᵒᵖ) :
+    ((Rop (C := C)).obj A ⟶ B) ≃ (A ⟶ (Lop (C := C)).obj B) :=
   letI := D.leftClosed
   letI := D.rightClosed
-  sorry
+  (CategoryTheory.opEquiv ((Rop (C := C)).obj A) B).trans <|
+    (HasRightIhom.homEquiv (A := A) (B := D.bot) B.unop).symm.trans <|
+      HasLeftIhom.homEquiv (A := B.unop) (B := D.bot) A
 
-def dialogueAdjunctionOp : Lop (C := C) ⊣ Rop :=
+def dialogueAdjunctionOp : Rop (C := C) ⊣ Lop :=
   Adjunction.mkOfHomEquiv
     {
       homEquiv := dialogueHomEquivOp
-      homEquiv_naturality_left_symm := sorry
-      homEquiv_naturality_right := sorry
+      homEquiv_naturality_left_symm := by
+        letI := D.leftClosed
+        letI := D.rightClosed
+        intros A₂ A₁ B f g
+        exact congrArg Quiver.Hom.op (rightEquiv_leftEquiv_symm_comp g f)
+      homEquiv_naturality_right := by
+        intros A B₁ B₂ f g
+        exact leftEquiv_rightEquiv_symm_comp g.unop f.unop
     }
 
 /-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
