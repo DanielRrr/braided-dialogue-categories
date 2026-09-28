@@ -1,7 +1,7 @@
 module
 
 public import Mathlib.CategoryTheory.Monoidal.Category
-
+public import Mathlib.CategoryTheory.Adjunction.Basic
 public import BraidedDialogueCategories.InternalHoms
 
 @[expose] public section
@@ -47,7 +47,7 @@ lemma leval_eq_eval (A : C) :
   letI := D.leftClosed
   leval A = HasLeftIhom.leftEval (A := A) (B := D.bot) := rfl
 
-/-- `leftDual` is a contravariant functor. -/
+/-- `leftDual` as a contravariant functor. It's called `L` in Melliés's manuscript.  -/
 def L : C ⥤ Cᵒᵖ where
   obj A := Opposite.op (leftDual A)
   map {A B} f :=
@@ -56,7 +56,7 @@ def L : C ⥤ Cᵒᵖ where
   map_id A := by simp
   map_comp {A B C} f g := by letI := D.leftClosed; simp
 
-/-- `leftDual` is a contravariant functor. It's called L^op in Melliés's manuscript. -/
+/-- `leftDual` as a contravariant functor. It's called `L^op` in Melliés's manuscript. -/
 def Lop : Cᵒᵖ ⥤ C where
   obj A := leftDual A.unop
   map := fun {X Y} f =>
@@ -67,15 +67,16 @@ def Lop : Cᵒᵖ ⥤ C where
    letI := D.leftClosed
    simp
 
-/-- `rightDual` is a contravariant functor. It's called `R` in Melliés's manuscript. -/
+/-- `rightDual` as a contravariant functor. It's called `R` in Melliés's manuscript. -/
 def R : Cᵒᵖ ⥤ C where
   obj A := rightDual A.unop
   map {X Y} f :=
-     letI := D.rightClosed
-     HasRightIhom.contramap f.unop        -- f.unop : Y.unop ⟶ X.unop, purely in C
+    letI := D.rightClosed
+    HasRightIhom.contramap f.unop
   map_id A := by simp
   map_comp f g := by letI := D.rightClosed; simp
 
+/-- `rightDual` as a contravariant functor. It's called `R^op` in Melliés's manuscript. -/
 def Rop : C ⥤ Cᵒᵖ where
   obj A := Opposite.op (rightDual A)
   map {A B} f :=
@@ -84,6 +85,63 @@ def Rop : C ⥤ Cᵒᵖ where
   map_id A := by simp
   map_comp f g := by letI := D.rightClosed; simp
 
+lemma adjNatLeft {A₁ A₂ : C} (B : C) (f : A₂ ⟶ A₁) (g : A₁ ⟶ rightDual B) :
+    letI := D.leftClosed
+    letI := D.rightClosed
+    HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B
+        ((HasRightIhom.homEquiv (A := B) (B := D.bot) A₂).symm (f ≫ g)) =
+      HasLeftIhom.homEquiv (A := A₁) (B := D.bot) B
+        ((HasRightIhom.homEquiv (A := B) (B := D.bot) A₁).symm g) ≫
+        HasLeftIhom.contramap (B := D.bot) f := by
+  letI := D.leftClosed
+  letI := D.rightClosed
+  rw [HasRightIhom.symm_comp, HasLeftIhom.homEquiv_naturality_left]
+
+lemma adjNatRight {A B₁ B₂ : C} (f : B₁ ⟶ leftDual A) (g : B₂ ⟶ B₁) :
+    letI := D.leftClosed
+    letI := D.rightClosed
+    HasRightIhom.homEquiv (A := B₂) (B := D.bot) A
+        ((HasLeftIhom.homEquiv (A := A) (B := D.bot) B₂).symm (g ≫ f)) =
+      HasRightIhom.homEquiv (A := B₁) (B := D.bot) A
+        ((HasLeftIhom.homEquiv (A := A) (B := D.bot) B₁).symm f) ≫
+        HasRightIhom.contramap (B := D.bot) g := by
+  letI := D.leftClosed
+  letI := D.rightClosed
+  rw [HasLeftIhom.symm_comp, HasRightIhom.homEquiv_naturality_left]
+
+def dialogueHomEquiv (A : C) (B : Cᵒᵖ) : (L.obj A ⟶ B) ≃ (A ⟶ R.obj B) :=
+  letI := D.leftClosed
+  letI := D.rightClosed
+  (CategoryTheory.opEquiv (L.obj A) B).trans <|
+    (HasLeftIhom.homEquiv (A := A) (B := D.bot) B.unop).symm.trans <|
+      HasRightIhom.homEquiv (A := B.unop) (B := D.bot) A
+
+def dialogueAdjunction : L (C := C) ⊣ R :=
+  letI := D.leftClosed
+  letI := D.rightClosed
+  Adjunction.mkOfHomEquiv
+    { homEquiv := dialogueHomEquiv
+      homEquiv_naturality_left_symm := by
+        intros A₁ A₂ B f g
+        exact congrArg Quiver.Hom.op (adjNatLeft (A₁ := A₂) (A₂ := A₁) B.unop f g)
+      homEquiv_naturality_right := by
+        intros A B₁ B₂ f g
+        exact adjNatRight (A := A) (B₁ := B₁.unop) (B₂ := B₂.unop) f.unop g.unop
+    }
+
+
+def dialogueHomEquivOp (A : Cᵒᵖ) (B : C) : (Lop.obj A ⟶ B) ≃ (A ⟶ Rop.obj B) :=
+  letI := D.leftClosed
+  letI := D.rightClosed
+  sorry
+
+def dialogueAdjunctionOp : Lop (C := C) ⊣ Rop :=
+  Adjunction.mkOfHomEquiv
+    {
+      homEquiv := dialogueHomEquivOp
+      homEquiv_naturality_left_symm := sorry
+      homEquiv_naturality_right := sorry
+    }
 
 /-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
 def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
@@ -118,8 +176,7 @@ def leftName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ leftDual A :=
 lemma leftNameUncurry (A : C) (f : A ⟶ bot) :
     ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A = (rightUnitor A).hom ≫ f := by
   letI := D.leftClosed
-  let e₀ :=
-    HasLeftIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
+  let e₀ := HasLeftIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
   let e₁ := HasLeftIhom.homEquiv (A := A) (B := D.bot) (leftDual A)
   apply e₀.injective
   let e₂ := HasLeftIhom.homEquivNaturalityₗ (A := A) (B := D.bot) (f := leftName A f) (g := leval A)
