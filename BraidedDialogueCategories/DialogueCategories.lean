@@ -1,7 +1,9 @@
 module
 
-public import Mathlib.CategoryTheory.Monoidal.Category
 public import Mathlib.CategoryTheory.Adjunction.Basic
+public import Mathlib.CategoryTheory.Monad.Basic
+public import Mathlib.CategoryTheory.Monad.Adjunction
+public import Mathlib.CategoryTheory.Monoidal.Category
 public import BraidedDialogueCategories.InternalHoms
 
 @[expose] public section
@@ -141,6 +143,7 @@ def dialogueHomEquiv (A : C) (B : Cᵒᵖ) : (L.obj A ⟶ B) ≃ (A ⟶ R.obj B)
     (HasLeftIhom.homEquiv (A := A) (B := D.bot) B.unop).symm.trans <|
       HasRightIhom.homEquiv (A := B.unop) (B := D.bot) A
 
+/-- The adjunction between between the left and the right dual functors. -/
 def dialogueAdjunction : L (C := C) ⊣ R :=
   letI := D.leftClosed
   letI := D.rightClosed
@@ -162,6 +165,7 @@ def dialogueHomEquivOp (A : C) (B : Cᵒᵖ) :
     (HasRightIhom.homEquiv (A := A) (B := D.bot) B.unop).symm.trans <|
       HasLeftIhom.homEquiv (A := B.unop) (B := D.bot) A
 
+/-- The adjunction dual to `L ⊣ R`. -/
 def dialogueAdjunctionOp : Rop (C := C) ⊣ Lop :=
   Adjunction.mkOfHomEquiv
     {
@@ -169,18 +173,30 @@ def dialogueAdjunctionOp : Rop (C := C) ⊣ Lop :=
       homEquiv_naturality_left_symm := by
         letI := D.leftClosed
         letI := D.rightClosed
-        intros A₂ A₁ B f g
-        exact congrArg Quiver.Hom.op (rightEquiv_leftEquiv_symm_comp g f)
+        intros A₂ A₁ B f g; exact congrArg Quiver.Hom.op (rightEquiv_leftEquiv_symm_comp g f)
       homEquiv_naturality_right := by
-        intros A B₁ B₂ f g
-        exact leftEquiv_rightEquiv_symm_comp g.unop f.unop
+        intros A B₁ B₂ f g; exact leftEquiv_rightEquiv_symm_comp g.unop f.unop
     }
+
+/-- The double negation monad `T : A ↦ rightDual (leftDual A)`. -/
+def monadT : Monad C := Adjunction.toMonad dialogueAdjunction
+
+/-- The underlying functor of `monadT`. -/
+def T : C ⥤ C := monadT.toFunctor
+
+/-- The double negation monad `T : A ↦ leftDual (rightDual A)`. -/
+def monadT' : Monad C := Adjunction.toMonad dialogueAdjunctionOp
+
+/-- The underlying functor of `monadT'`. -/
+def T' : C ⥤ C := monadT'.toFunctor
 
 /-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
 def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
   letI := D.rightClosed
   HasRightIhom.evalRight (A := A) (B := DialogueCategory.bot)
 
+/-- The useful tautological equality for `reval` explicitly identifying `reval`
+with `HasRightIhom.evalRight` with `B` instantiated with `D.bot`. -/
 lemma reval_eq_eval (A : C) :
   letI := D.rightClosed
   reval A = HasRightIhom.evalRight (A := A) (B := D.bot) := rfl
@@ -200,12 +216,14 @@ def rev (A B : C) : (rightDual (A ⊗ B)) ⊗ A ⟶ rightDual B :=
     (rightDual (A ⊗ B) ⊗ A)
     ((associator (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
 
+/-- The currification of the left negation. -/
 def leftName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ leftDual A :=
   letI := D.leftClosed
   HasLeftIhom.homEquiv (A := A) (B := D.bot)
     (𝟙_ C)
     ((rightUnitor A).hom ≫ f)
 
+/-- The exponentiation property for `leftName`. -/
 lemma leftNameUncurry (A : C) (f : A ⟶ bot) :
     ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A = (rightUnitor A).hom ≫ f := by
   letI := D.leftClosed
@@ -219,17 +237,14 @@ lemma leftNameUncurry (A : C) (f : A ⟶ bot) :
   simp [leftName, e₀]
 
 lemma leftNameFact (A : C) (f : A ⟶ bot) : f = (rightUnitor A).inv ≫ ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A := by
-  rw [leftNameUncurry]
-  simp
+  rw [leftNameUncurry]; simp
 
+/-- The currification of right negation. -/
 def rightName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ rightDual A :=
   letI := D.rightClosed
-  HasRightIhom.homEquiv
-    (A := A)
-    (B := D.bot)
-    (𝟙_ C)
-    ((leftUnitor A).hom ≫ f)
+  HasRightIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C) ((leftUnitor A).hom ≫ f)
 
+/-- The exponentiation property for `rightName`. -/
 lemma rightNameUncurry (A : C) (f : A ⟶ bot) :
   (rightName A f ⊗ₘ (𝟙 A)) ≫ reval A = (leftUnitor A).hom ≫ f := by
   letI := D.rightClosed
@@ -243,12 +258,11 @@ lemma rightNameUncurry (A : C) (f : A ⟶ bot) :
   simp [rightName, e₀]
 
 lemma rightNameFact (A : C) (f : A ⟶ bot) : f = (leftUnitor A).inv ≫ (rightName A f ⊗ₘ (𝟙 A)) ≫ reval A := by
-  rw [rightNameUncurry]
-  simp
+  rw [rightNameUncurry]; simp
 end DialogueCategory
 
 open DialogueCategory in
 class StarAutonomousCategory (C : Type v)
-    [Category.{v} C] [MonoidalCategory C] [DialogueCategory C] where
-  etaStar₁ : ∀ A : C, A ≅ leftDual (rightDual A)
-  etaStar₂ : ∀ A : C, A ≅ rightDual (leftDual A)
+    [Category C] [MonoidalCategory C] [DialogueCategory C] where
+  etaStar₁ : ∀ A : C, A ≅ DialogueCategory.T.obj A
+  etaStar₂ : ∀ A : C, A ≅ DialogueCategory.T'.obj A

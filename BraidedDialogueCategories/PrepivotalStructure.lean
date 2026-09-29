@@ -31,7 +31,6 @@ variable (C : Type v) [Category.{v} C] [MonoidalCategory C] [D : DialogueCategor
 
 /-- Getting a wheel from a turn. -/
 def turnToWheel₁ (t : Turn C) (A B : C) (f : A ⊗ B ⟶ D.bot) :
-  letI := D
   (B ⊗ A ⟶ D.bot) :=
   letI := D.leftClosed
   letI := D.rightClosed
