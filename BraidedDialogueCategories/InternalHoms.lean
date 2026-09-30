@@ -139,6 +139,7 @@ lemma symm_apply_eq {X : C} (k : X ⟶ internalHomᵣ A B) :
 
 variable {A₁ A₂ A₃ : C} [HasRightIhom A₁ B] [HasRightIhom A₂ B] [HasRightIhom A₃ B]
 
+/-- The right internal hom is a contravariant functor for any fixed `B`. -/
 def contramap (g : A₁ ⟶ A₂) : internalHomᵣ A₂ B ⟶ internalHomᵣ A₁ B :=
   homEquiv (A := A₁) (internalHomᵣ A₂ B) ((𝟙 _ ⊗ₘ g) ≫ evalRight)
 
@@ -149,12 +150,11 @@ lemma contramapId : contramap (B := B) (𝟙 A) = 𝟙 (internalHomᵣ A B) := b
   simp [evalRight]
 
 lemma homEquiv_naturality_left {X : C} (g : A₁ ⟶ A₂) (f : X ⊗ A₂ ⟶ B) :
-    homEquiv (A := A₁) X ((𝟙 X ⊗ₘ g) ≫ f) =
-      homEquiv (A := A₂) X f ≫ contramap g := by
-  set φ := homEquiv (A := A₂) X f with hφ
+    homEquiv X ((𝟙 X ⊗ₘ g) ≫ f) = homEquiv X f ≫ contramap g := by
+  set φ := homEquiv X f with hφ
   have hf : f = (φ ⊗ₘ 𝟙 A₂) ≫ evalRight := by
-    have h1 : (homEquiv (A := A₂) X).symm φ = (φ ⊗ₘ 𝟙 A₂) ≫ evalRight := symm_apply_eq φ
-    have h2 : (homEquiv (A := A₂) X).symm φ = f := by
+    have h1 : (homEquiv X).symm φ = (φ ⊗ₘ 𝟙 A₂) ≫ evalRight := symm_apply_eq φ
+    have h2 : (homEquiv X).symm φ = f := by
       rw [hφ]; exact Equiv.symm_apply_apply _ f
     rw [← h2]; exact h1
   rw [hf, ← Category.assoc, tensorHom_comp_tensorHom, Category.comp_id, Category.id_comp]
@@ -166,13 +166,13 @@ lemma homEquiv_naturality_left {X : C} (g : A₁ ⟶ A₂) (f : X ⊗ A₂ ⟶ B
 @[simp]
 lemma contramapComp (f₁ : A₁ ⟶ A₂) (f₂ : A₂ ⟶ A₃) :
   contramap (f₁ ≫ f₂) = contramap (B := B) f₂ ≫ contramap f₁ := by
-  have h := homEquiv_naturality_left (A₁ := A₁) (A₂ := A₂) (B := B) f₁ ((𝟙 (internalHomᵣ A₃ B) ⊗ₘ f₂) ≫ evalRight)
+  have h := homEquiv_naturality_left f₁ ((𝟙 (internalHomᵣ A₃ B) ⊗ₘ f₂) ≫ evalRight)
   simpa [contramap] using h
 
 lemma symm_naturality_left {X : C} (g : A₁ ⟶ A₂) (ψ : X ⟶ internalHomᵣ A₂ B) :
-    (𝟙 X ⊗ₘ g) ≫ (homEquiv (A := A₂) X).symm ψ =
-      (homEquiv (A := A₁) X).symm (ψ ≫ contramap g) := by
-  apply (homEquiv (A := A₁) X).injective
+    (𝟙 X ⊗ₘ g) ≫ (homEquiv X).symm ψ =
+      (homEquiv X).symm (ψ ≫ contramap g) := by
+  apply (homEquiv X).injective
   rw [Equiv.apply_symm_apply, homEquiv_naturality_left, Equiv.apply_symm_apply]
 
 lemma symm_comp {X Y : C} (m : X ⟶ Y) (k : Y ⟶ internalHomᵣ A B) :

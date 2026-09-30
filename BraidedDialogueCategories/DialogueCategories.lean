@@ -55,46 +55,35 @@ def L : C ⥤ Cᵒᵖ where
   map {A B} f :=
     letI := D.leftClosed
     (HasLeftIhom.contramap (B := D.bot) f).op
-  map_id A := by simp
-  map_comp {A B C} f g := by letI := D.leftClosed; simp
+  map_id := by simp
+  map_comp := by letI := D.leftClosed; simp
 
 /-- `leftDual` as a contravariant functor. It's called `L^op` in Melliés's manuscript. -/
 def Lop : Cᵒᵖ ⥤ C where
   obj A := leftDual A.unop
-  map := fun {X Y} f =>
-    letI := D.leftClosed
-    HasLeftIhom.contramap f.unop
-  map_id A := by simp
-  map_comp {A B C} f g := by
-   letI := D.leftClosed
-   simp
+  map f := letI := D.leftClosed; HasLeftIhom.contramap f.unop
+  map_id := by simp
+  map_comp := by letI := D.leftClosed; simp
 
 /-- `rightDual` as a contravariant functor. It's called `R` in Melliés's manuscript. -/
 def R : Cᵒᵖ ⥤ C where
   obj A := rightDual A.unop
-  map {X Y} f :=
-    letI := D.rightClosed
-    HasRightIhom.contramap f.unop
-  map_id A := by simp
-  map_comp f g := by letI := D.rightClosed; simp
+  map f := letI := D.rightClosed; HasRightIhom.contramap f.unop
+  map_id := by simp
+  map_comp := by letI := D.rightClosed; simp
 
 /-- `rightDual` as a contravariant functor. It's called `R^op` in Melliés's manuscript. -/
 def Rop : C ⥤ Cᵒᵖ where
   obj A := Opposite.op (rightDual A)
-  map {A B} f :=
-    letI := D.rightClosed
-    (HasRightIhom.contramap (B := D.bot) f).op
-  map_id A := by simp
-  map_comp f g := by letI := D.rightClosed; simp
+  map f := letI := D.rightClosed; (HasRightIhom.contramap f).op
+  map_id := by simp
+  map_comp := by letI := D.rightClosed; simp
 
 lemma adjNatLeft {A₁ A₂ : C} (B : C) (f : A₂ ⟶ A₁) (g : A₁ ⟶ rightDual B) :
     letI := D.leftClosed
     letI := D.rightClosed
-    HasLeftIhom.homEquiv (A := A₂) (B := D.bot) B
-        ((HasRightIhom.homEquiv (A := B) (B := D.bot) A₂).symm (f ≫ g)) =
-      HasLeftIhom.homEquiv (A := A₁) (B := D.bot) B
-        ((HasRightIhom.homEquiv (A := B) (B := D.bot) A₁).symm g) ≫
-        HasLeftIhom.contramap (B := D.bot) f := by
+    HasLeftIhom.homEquiv B ((HasRightIhom.homEquiv A₂).symm (f ≫ g)) =
+    HasLeftIhom.homEquiv B ((HasRightIhom.homEquiv A₁).symm g) ≫ HasLeftIhom.contramap f := by
   letI := D.leftClosed
   letI := D.rightClosed
   rw [HasRightIhom.symm_comp, HasLeftIhom.homEquiv_naturality_left]
@@ -102,11 +91,8 @@ lemma adjNatLeft {A₁ A₂ : C} (B : C) (f : A₂ ⟶ A₁) (g : A₁ ⟶ right
 lemma adjNatRight {A B₁ B₂ : C} (f : B₁ ⟶ leftDual A) (g : B₂ ⟶ B₁) :
     letI := D.leftClosed
     letI := D.rightClosed
-    HasRightIhom.homEquiv (A := B₂) (B := D.bot) A
-        ((HasLeftIhom.homEquiv (A := A) (B := D.bot) B₂).symm (g ≫ f)) =
-      HasRightIhom.homEquiv (A := B₁) (B := D.bot) A
-        ((HasLeftIhom.homEquiv (A := A) (B := D.bot) B₁).symm f) ≫
-        HasRightIhom.contramap (B := D.bot) g := by
+    HasRightIhom.homEquiv A ((HasLeftIhom.homEquiv B₂).symm (g ≫ f)) =
+    HasRightIhom.homEquiv A ((HasLeftIhom.homEquiv B₁).symm f) ≫ HasRightIhom.contramap g := by
   letI := D.leftClosed
   letI := D.rightClosed
   rw [HasLeftIhom.symm_comp, HasRightIhom.homEquiv_naturality_left]
@@ -136,6 +122,7 @@ lemma rightEquiv_leftEquiv_symm_comp {A₁ A₂ B : C}
   letI := D.rightClosed
   rw [HasLeftIhom.symm_comp, HasRightIhom.homEquiv_naturality_left]
 
+/-- The equivalence between `L A ⟶ B ≃ A ⟶ R B`. -/
 def dialogueHomEquiv (A : C) (B : Cᵒᵖ) : (L.obj A ⟶ B) ≃ (A ⟶ R.obj B) :=
   letI := D.leftClosed
   letI := D.rightClosed
@@ -156,7 +143,7 @@ def dialogueAdjunction : L (C := C) ⊣ R :=
         intros A B₁ B₂ f g; apply adjNatRight
     }
 
-
+/-- The equivalence between `R^op A ⟶ B ≃ A ⟶ L^op B`. -/
 def dialogueHomEquivOp (A : C) (B : Cᵒᵖ) :
     ((Rop (C := C)).obj A ⟶ B) ≃ (A ⟶ (Lop (C := C)).obj B) :=
   letI := D.leftClosed
@@ -168,8 +155,7 @@ def dialogueHomEquivOp (A : C) (B : Cᵒᵖ) :
 /-- The adjunction dual to `L ⊣ R`. -/
 def dialogueAdjunctionOp : Rop (C := C) ⊣ Lop :=
   Adjunction.mkOfHomEquiv
-    {
-      homEquiv := dialogueHomEquivOp
+    { homEquiv := dialogueHomEquivOp
       homEquiv_naturality_left_symm := by
         letI := D.leftClosed
         letI := D.rightClosed
@@ -203,25 +189,18 @@ lemma reval_eq_eval (A : C) :
 
 def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
   letI := D.leftClosed
-  HasLeftIhom.homEquiv
-      (A := A)
-      (B := DialogueCategory.bot)
-      (B ⊗ leftDual (A ⊗ B))
+  HasLeftIhom.homEquiv (B ⊗ leftDual (A ⊗ B))
       ((associator A B (leftDual (A ⊗ B))).inv ≫
         leval (A ⊗ B))
 
+/-- The useful combinator obtained from the right evaluation. -/
 def rev (A B : C) : (rightDual (A ⊗ B)) ⊗ A ⟶ rightDual B :=
   letI := D.rightClosed
-  HasRightIhom.homEquiv (A := B) (B := DialogueCategory.bot)
-    (rightDual (A ⊗ B) ⊗ A)
-    ((associator (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
+  HasRightIhom.homEquiv (rightDual (A ⊗ B) ⊗ A) ((associator (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
 
 /-- The currification of the left negation. -/
 def leftName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ leftDual A :=
-  letI := D.leftClosed
-  HasLeftIhom.homEquiv (A := A) (B := D.bot)
-    (𝟙_ C)
-    ((rightUnitor A).hom ≫ f)
+  letI := D.leftClosed; HasLeftIhom.homEquiv (𝟙_ C) ((rightUnitor A).hom ≫ f)
 
 /-- The exponentiation property for `leftName`. -/
 lemma leftNameUncurry (A : C) (f : A ⟶ bot) :
