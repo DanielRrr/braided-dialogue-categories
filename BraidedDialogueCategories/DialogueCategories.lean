@@ -264,5 +264,5 @@ end DialogueCategory
 open DialogueCategory in
 class StarAutonomousCategory (C : Type v)
     [Category C] [MonoidalCategory C] [DialogueCategory C] where
-  etaStar₁ : ∀ A : C, A ≅ DialogueCategory.T.obj A
-  etaStar₂ : ∀ A : C, A ≅ DialogueCategory.T'.obj A
+  etaStar₁ : ∀ A : C, A ≅ T.obj A
+  etaStar₂ : ∀ A : C, A ≅ T'.obj A
