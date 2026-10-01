@@ -58,15 +58,15 @@ lemma turnToWheel_rightInv (t : Turn C) (A B : C) :  Function.RightInverse (turn
   simp [turnToWheel₁, turnToWheel₂]
 
 /-- The first key lemma in showing naturality in the proof that turns in dialogue categories induce wheels. -/
-lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (g : A₁ ⟶ A₂) (f : A₂ ⊗ B ⟶ bot) :
-    turnToWheel₁ C t A₁ B (g ▷ B ≫ f) = B ◁ g ≫ turnToWheel₁ C t A₂ B f := by
+lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (f : A₁ ⟶ A₂) (g : A₂ ⊗ B ⟶ bot) :
+    turnToWheel₁ C t A₁ B (f ▷ B ≫ g) = B ◁ f ≫ turnToWheel₁ C t A₂ B g := by
   letI := D.leftClosed; letI := D.rightClosed
-  have hturn : HasLeftIhom.contramap g ≫ (t.turn A₁).hom = (t.turn A₂).hom ≫ HasRightIhom.contramap g := by
-    exact t.turnNaturality g
-  show (HasRightIhom.homEquiv B).symm (HasLeftIhom.homEquiv B (g ▷ B ≫ f) ≫ (t.turn A₁).hom) =
-    B ◁ g ≫ (HasRightIhom.homEquiv B).symm (HasLeftIhom.homEquiv B f ≫ (t.turn A₂).hom)
-  rw [← MonoidalCategory.tensorHom_id, HasLeftIhom.homEquiv_naturality_left g f, Category.assoc, hturn, ← Category.assoc, ← MonoidalCategory.id_tensorHom]
-  exact (HasRightIhom.symm_naturality_left g _).symm
+  have hturn : HasLeftIhom.contramap f ≫ (t.turn A₁).hom = (t.turn A₂).hom ≫ HasRightIhom.contramap f := by
+    exact t.turnNaturality f
+  show (HasRightIhom.homEquiv B).symm (HasLeftIhom.homEquiv B (f ▷ B ≫ g) ≫ (t.turn A₁).hom) =
+    B ◁ f ≫ (HasRightIhom.homEquiv B).symm (HasLeftIhom.homEquiv B g ≫ (t.turn A₂).hom)
+  rw [← MonoidalCategory.tensorHom_id, HasLeftIhom.homEquiv_naturality_left f g, Category.assoc, hturn, ← Category.assoc, ← MonoidalCategory.id_tensorHom]
+  exact (HasRightIhom.symm_naturality_left f _).symm
 
 /-- The second key lemma in showing naturality in the proof that turns in dialogue categories induce wheels. -/
 lemma turnToWheelNat₂ (t : Turn C) (A B₁ B₂ : C) (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot)

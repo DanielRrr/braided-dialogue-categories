@@ -1,0 +1,184 @@
+\documentclass[8pt]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsopn}
+\usepackage{comment}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{bussproofs}
+\usepackage[all, 2cell]{xy}
+\usepackage[all]{xy}
+\usepackage{rotating}
+\usepackage{lscape}
+\usepackage{minted}
+\usepackage{dsfont}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{stmaryrd}
+\usepackage{multicol}
+\usepackage{cmll}
+\usepackage{wasysym}
+\usetikzlibrary{shapes.geometric, arrows, positioning, backgrounds}
+\usetikzlibrary{cd}
+\makeatletter
+\tikzcdset{
+  eq node/.style={
+    commutative diagrams/math mode=false, anchor=center},
+  eq/.style={
+    phantom,
+    /tikz/every to/.append style={
+      edge node={node[commutative diagrams/eq node]
+        {\@eqnswtrue\make@display@tag\ltx@label{#1}}}}}}
+\makeatother
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+
+\theoremstyle{definition}
+\newtheorem{theorem}{Theorem}[section]
+
+\theoremstyle{definition}
+\newtheorem{claim}{Claim}[section]
+
+\theoremstyle{definition}
+\newtheorem{ex}{Example}[section] 
+
+\theoremstyle{definition}
+\newtheorem{cons}{Construction}[section] 
+
+\theoremstyle{definition}
+\newtheorem{rem}{Remark}[section] 
+
+
+\theoremstyle{definition}
+\newtheorem{prop}{Proposition}[section]
+
+\theoremstyle{definition}
+\newtheorem{lemma}{Lemma}[section]
+
+\theoremstyle{definition}
+\newtheorem{fact}{Fact}[section]
+
+\theoremstyle{definition}
+\newtheorem{remark}{Remark}[section]
+
+\theoremstyle{definition}
+\newtheorem{notation}{Notation}[section]
+
+\theoremstyle{definition}
+\newtheorem{example}{Example}[section]
+
+\theoremstyle{definition}
+\newtheorem{exercise}{Exercise}[section]
+
+\theoremstyle{definition}
+\newtheorem{col}{Corollary}[section]
+
+\theoremstyle{question}
+\newtheorem{question}{Question}
+
+\let\strokeL\L
+\renewcommand\L{\mathbf{L}}
+
+\DeclareMathOperator{\bang}{!}
+
+\DeclareMathOperator*{\colim}{\operatorname{colim}}
+\newcommand{\Ob}[1]{\operatorname{Ob}({\mathcal{#1}})}
+\newcommand{\Cov}[1]{\operatorname{Cov}(#1)}
+
+\newcommand{\circvee}{\mathbin{\text{\ooalign{\hfil$\vee$\hfil\cr\kern0.1ex$\bigcirc$}}}}
+\newcommand{\circwedge}{\mathbin{\text{\ooalign{\hfil$\wedge$\hfil\cr\kern0.1ex$\bigcirc$}}}}
+
+\title{Braided Notions of Dialogue Categories: reworked proofs}
+\author{Daniel Rogozin \footnote{The original text is by Paul-Andr\'{e} Melliès}}
+\date{ }
+
+\newcommand{\IntHom}[1]{[#1]}
+
+\begin{document}
+
+\maketitle
+
+\section{Dialogue Categories: Basic Constructions and Facts}
+
+\begin{definition}
+  Let $\mathcal{C}$ be a monoidal category, a $\mathcal{C}$ is \emph{dialogue category}
+  if there is an exponentiable object $\bot$, i.e., there are bijections natural in $A$ and $B$
+  \begin{center}
+    $\varphi_{A,B} : \mathcal{C}(A \otimes B, \bot) \cong (B, A \multimap \bot)$
+
+    $\psi_{A, B} : \mathcal{C}(A \otimes B, \bot) \cong (A, \bot \multimapinv B )$
+  \end{center}
+\end{definition}
+
+Here are some useful combinators:
+\begin{itemize}
+  \item The left evaluation map:
+  \[
+  \operatorname{leval}_A = \varphi^{-1}_{A,A \multimap \bot} 1_{A \multimap \bot} : A \otimes (A \multimap \bot) \to \bot
+  \]
+  \item The right evaluation map:
+  \[
+  \operatorname{reval}_A = \psi^{-1}_{\bot \multimapinv A, A} 1_{\bot \multimapinv A} : (\bot \multimapinv A) \otimes A \to \bot
+  \]
+  \item The composite left evaluation map:
+  \begin{center}
+  $ \operatorname{lev}_{B,A} : B \otimes ((A \otimes B) \multimap \bot) \to (A \multimap \bot)$ \\
+  $\operatorname{lev}_{B,A} = \varphi_{A, B \otimes ((A \otimes B) \multimap \bot)} (\operatorname{leval}_{A \otimes B} \circ \alpha_{A, B, A \otimes B \multimap \bot})$
+  \end{center}
+  \item The composite right evaluation map:
+  \begin{center}
+  $\operatorname{rev}_{A, B} : (\bot \multimapinv (A \otimes B)) \otimes A \to (\bot \multimapinv B)$ \\
+  $\operatorname{rev}_{A, B} = \psi_{(A \otimes B \multimapinv \bot) \otimes A, B} (\operatorname{reval}_{A \otimes B} \circ \alpha_{A \otimes B \multimapinv \bot, A, B} )$
+  \end{center}
+\end{itemize}
+
+\begin{definition}
+   Let $\mathcal{C}$ be a dialogue category,
+  \begin{itemize} 
+  \item a \emph{turn} in $\mathcal{C}$ is a natural isomorphism
+  $\operatorname{turn}_A : A \multimap \bot \cong \bot \multimapinv A$.
+  \item a \emph{wheel} in $\mathcal{C}$ is a bijection $\mathcal{C}(A \otimes B, \bot) \simeq \mathcal{C}(B \otimes A, \bot)$
+  natural in both $A$ and $B$. 
+  \end{itemize}
+\end{definition}
+
+\begin{theorem}
+  There is a 1-to-1 correspondence between turns and wheels in any dialogue category $\mathcal{C}$.
+\end{theorem}
+\begin{proof}
+  Given a turn $\operatorname{turn}_A : A \multimap \bot \cong \bot \multimapinv A$ natural in $A$,
+  define $\operatorname{wheel}_{A,B} : \mathcal{C}(A \otimes B, \bot) \to \mathcal{C}(B \otimes A, \bot)$
+  as the following composite of bijections:
+  \[
+  \mathcal{C}(A \otimes B, \bot) \xrightarrow{\varphi_{A,B}} \mathcal{C}(B, A \multimap \bot) \xrightarrow{\mathcal{C}(1_B, \operatorname{turn}_A)} \mathcal{C}(B, \bot \multimapinv A) \xrightarrow{\psi^{-1}_{A,B}} \mathcal{C}(B \otimes A, \bot)
+  \]
+  This is obviously invertible, just take $\varphi^{-1}_{A,B} \circ \mathcal{C}(B, A \multimap \bot) \circ \psi_{A,B}$.
+  $\operatorname{wheel}$ is also natural in both arguments. 
+  Take $f : A_1 \to A_2$ and $g : A_2 \otimes B \to \bot$, then the following square commutes:
+  \[
+  \begin{tikzcd}
+    B \otimes A_1 \ar[rr, "1_B \otimes f"] \ar[dr, "\operatorname{wheel}(g \circ f \otimes 1_B)"'] && B \otimes A_2 \ar[dl, "\operatorname{wheel}_{A_2,B}(f)"] \\
+    & \bot
+  \end{tikzcd}
+  \]
+
+  First of all, we have the following by the naturality of internal homs:
+  \begin{equation}~\label{eq:1}
+  \operatorname{turn}_{A_1} \circ \: \mathcal{C}(f,\bot) = \mathcal{C}(f,\bot) \circ \operatorname{turn}_{A_2}
+  \end{equation}
+  Further, observe that:
+  \begin{equation}~\label{e2:1}
+    \psi^{-1}_{B,A_1}(\operatorname{turn}_{A_1} \circ \: \varphi_{A_1,B}(g \circ f \otimes 1_B)) = \psi^{-1}_{B,A_2} (\operatorname{turn}_{A_2} \circ \: \varphi_{A_2,B}(g)) \circ (1_B \otimes f)
+  \end{equation}
+  Since
+  \begin{align*}
+    \psi^{-1}_{B,A_1}(\operatorname{turn}_{A_1} \circ \: \varphi_{A_1,B}(g \circ f \otimes 1_B)) &= \psi^{-1}_{B,A_1}(\operatorname{turn}_{A_1} \circ \: \mathcal{C}(f,1_{\bot}) \circ \varphi_{A_2,B}(g)) \\
+    &= \psi^{-1}_{B,A_1}(\mathcal{C}(f,1_{\bot}) \circ \operatorname{turn}_{A_2} \circ \varphi_{A_2,B}(g))
+    &= \psi^{-1}_{B,A_2} (\operatorname{turn}_{A_2} \circ \: \varphi_{A_2,B}(g)) \circ (1_B \otimes f)
+  \end{align*}
+\end{proof}
+
+\end{document}

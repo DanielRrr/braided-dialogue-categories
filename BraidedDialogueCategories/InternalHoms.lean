@@ -56,7 +56,7 @@ def contramap (g : A₁ ⟶ A₂) : internalHomₗ A₂ B ⟶ internalHomₗ A�
 /-- The identity axiom is satisfied for `contramap` for the left internal homs. -/
 @[simp]
 lemma contramapId : contramap (B := B) (𝟙 A) = 𝟙 (internalHomₗ A B) := by
-  show homEquiv (A := A) (internalHomₗ A B) ((𝟙 A ⊗ₘ 𝟙 (internalHomₗ A B)) ≫ leftEval) = 𝟙 _
+  show homEquiv (internalHomₗ A B) ((𝟙 A ⊗ₘ 𝟙 (internalHomₗ A B)) ≫ leftEval) = 𝟙 _
   simp [leftEval]
 
 /-- The naturality square `hleft` was reconstructing by hand. -/

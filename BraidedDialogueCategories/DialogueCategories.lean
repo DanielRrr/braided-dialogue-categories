@@ -52,9 +52,7 @@ lemma leval_eq_eval (A : C) :
 /-- `leftDual` as a contravariant functor. It's called `L` in Melliés's manuscript.  -/
 def L : C ⥤ Cᵒᵖ where
   obj A := Opposite.op (leftDual A)
-  map {A B} f :=
-    letI := D.leftClosed
-    (HasLeftIhom.contramap (B := D.bot) f).op
+  map f := letI := D.leftClosed; (HasLeftIhom.contramap f).op
   map_id := by simp
   map_comp := by letI := D.leftClosed; simp
 
@@ -124,33 +122,28 @@ lemma rightEquiv_leftEquiv_symm_comp {A₁ A₂ B : C}
 
 /-- The equivalence between `L A ⟶ B ≃ A ⟶ R B`. -/
 def dialogueHomEquiv (A : C) (B : Cᵒᵖ) : (L.obj A ⟶ B) ≃ (A ⟶ R.obj B) :=
-  letI := D.leftClosed
-  letI := D.rightClosed
+  letI := D.leftClosed; letI := D.rightClosed
   (CategoryTheory.opEquiv (L.obj A) B).trans <|
-    (HasLeftIhom.homEquiv (A := A) (B := D.bot) B.unop).symm.trans <|
-      HasRightIhom.homEquiv (A := B.unop) (B := D.bot) A
+    (HasLeftIhom.homEquiv B.unop).symm.trans <| HasRightIhom.homEquiv A
 
 /-- The adjunction between between the left and the right dual functors. -/
 def dialogueAdjunction : L (C := C) ⊣ R :=
-  letI := D.leftClosed
-  letI := D.rightClosed
+  letI := D.leftClosed; letI := D.rightClosed
   Adjunction.mkOfHomEquiv
     { homEquiv := dialogueHomEquiv
       homEquiv_naturality_left_symm := by
         intros A₁ A₂ B f g
-        exact congrArg Quiver.Hom.op (adjNatLeft (A₁ := A₂) (A₂ := A₁) B.unop f g)
+        exact congrArg Quiver.Hom.op <| adjNatLeft B.unop f g
       homEquiv_naturality_right := by
         intros A B₁ B₂ f g; apply adjNatRight
     }
 
 /-- The equivalence between `R^op A ⟶ B ≃ A ⟶ L^op B`. -/
-def dialogueHomEquivOp (A : C) (B : Cᵒᵖ) :
-    ((Rop (C := C)).obj A ⟶ B) ≃ (A ⟶ (Lop (C := C)).obj B) :=
+def dialogueHomEquivOp (A : C) (B : Cᵒᵖ) : (Rop.obj A ⟶ B) ≃ (A ⟶ Lop.obj B) :=
   letI := D.leftClosed
   letI := D.rightClosed
-  (CategoryTheory.opEquiv ((Rop (C := C)).obj A) B).trans <|
-    (HasRightIhom.homEquiv (A := A) (B := D.bot) B.unop).symm.trans <|
-      HasLeftIhom.homEquiv (A := B.unop) (B := D.bot) A
+  (CategoryTheory.opEquiv (Rop.obj A) B).trans <|
+    (HasRightIhom.homEquiv B.unop).symm.trans <| HasLeftIhom.homEquiv A
 
 /-- The adjunction dual to `L ⊣ R`. -/
 def dialogueAdjunctionOp : Rop (C := C) ⊣ Lop :=
