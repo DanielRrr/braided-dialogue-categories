@@ -22,8 +22,7 @@ class PrepivotalCategory (C : Type v) [Category.{v} C] [MonoidalCategory.{v} C] 
   turn : Turn C
 
 /-- The negative symmetry: the isomorphism between the negated `A ⊗ B` and the negated `B ⊗ A`.-/
-@[ext]
-structure Wheel (C : Type v) [Category.{v} C] [MonoidalCategory C] [DialogueCategory.{v} C] where
+@[ext] structure Wheel (C : Type v) [Category.{v} C] [MonoidalCategory C] [DialogueCategory.{v} C] where
   wheel : ∀ (A B : C), (A ⊗ B ⟶ bot) ≃ (B ⊗ A ⟶ bot)
   wheelNatInA : ∀ {A₁ A₂ B : C} (f : A₁ ⟶ A₂) (g : A₂ ⊗ B ⟶ bot),
     wheel A₁ B ((f ⊗ₘ 𝟙 B) ≫ g) = (𝟙 B ⊗ₘ f) ≫ wheel A₂ B g
@@ -35,16 +34,11 @@ variable (C : Type v) [Category.{v} C] [MonoidalCategory C] [D : DialogueCategor
 /-- Getting a wheel from a turn. -/
 def turnToWheel₁ (t : Turn C) (A B : C) (f : A ⊗ B ⟶ D.bot) :
   (B ⊗ A ⟶ D.bot) :=
-  letI := D.leftClosed
-  letI := D.rightClosed
   (HasRightIhom.homEquiv B).symm ((HasLeftIhom.homEquiv B).toFun f ≫ (t.turn A).hom)
 
 /-- Getting a wheel from a turn: the other way round. -/
 def turnToWheel₂ (t : Turn C) (A B : C) (f : B ⊗ A ⟶ D.bot) :
-  letI := D
   (A ⊗ B ⟶ D.bot) :=
-  letI := D.leftClosed
-  letI := D.rightClosed
   (HasLeftIhom.homEquiv B).symm ((HasRightIhom.homEquiv B).toFun f ≫ (t.turn A).inv)
 
 /-- `turnToWheel₂` is the left inverse to `turnToWheel₁`. -/
@@ -60,7 +54,6 @@ lemma turnToWheel_rightInv (t : Turn C) (A B : C) :  Function.RightInverse (turn
 /-- The first key lemma in showing naturality in the proof that turns in dialogue categories induce wheels. -/
 lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (f : A₁ ⟶ A₂) (g : A₂ ⊗ B ⟶ bot) :
     turnToWheel₁ C t A₁ B (f ▷ B ≫ g) = B ◁ f ≫ turnToWheel₁ C t A₂ B g := by
-  letI := D.leftClosed; letI := D.rightClosed
   have hturn : HasLeftIhom.contramap f ≫ (t.turn A₁).hom = (t.turn A₂).hom ≫ HasRightIhom.contramap f := by
     exact t.turnNaturality f
   show (HasRightIhom.homEquiv B).symm (HasLeftIhom.homEquiv B (f ▷ B ≫ g) ≫ (t.turn A₁).hom) =
@@ -71,8 +64,6 @@ lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (f : A₁ ⟶ A₂) (g : 
 /-- The second key lemma in showing naturality in the proof that turns in dialogue categories induce wheels. -/
 lemma turnToWheelNat₂ (t : Turn C) (A B₁ B₂ : C) (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot)
   : turnToWheel₁ C t A B₁ (A ◁ g ≫ f) = g ▷ A ≫ turnToWheel₁ C t A B₂ f := by
-  letI := D.leftClosed
-  letI := D.rightClosed
   show
     (HasRightIhom.homEquiv B₁).symm ((HasLeftIhom.homEquiv B₁)
         (A ◁ g ≫ f) ≫ (t.turn A).hom) = g ▷ A ≫
@@ -83,7 +74,6 @@ lemma turnToWheelNat₂ (t : Turn C) (A B₁ B₂ : C) (g : B₁ ⟶ B₂) (f : 
 
 /-- The 1-to-1 correspondence between `leftDual A ⟶ leftDual A` and `leftDual A ⟶ rightDual A` obtain from `Wheel`. -/
 def wheelToTurn₁ (wheel : Wheel C) (A : C) : (leftDual A ⟶ leftDual A) ≃ (leftDual A ⟶ rightDual A) :=
-  letI := D.leftClosed; letI := D.rightClosed
   calc
   (leftDual A ⟶ leftDual A) ≃ (A ⊗ leftDual A ⟶ bot) := (HasLeftIhom.homEquiv (leftDual A)).symm
   _ ≃ (leftDual A ⊗ A ⟶ bot) := wheel.wheel A (leftDual A)
@@ -91,8 +81,6 @@ def wheelToTurn₁ (wheel : Wheel C) (A : C) : (leftDual A ⟶ leftDual A) ≃ (
 
 /-- The 1-to-1 correspondence between `rightDual A ⟶ rightDual A` and `rightDual A ⟶ leftDual A` obtain from `Wheel`. -/
 def wheelToTurn₂ (wheel : Wheel C) (A : C) : (rightDual A ⟶ rightDual A) ≃ (rightDual A ⟶ leftDual A) :=
-  letI := D.leftClosed
-  letI := D.rightClosed
   calc
   (rightDual A ⟶ rightDual A) ≃ (rightDual A ⊗ A ⟶ bot) := (HasRightIhom.homEquiv (rightDual A)).symm
   _ ≃ (A ⊗ rightDual A ⟶ bot) := (wheel.wheel A (rightDual A)).symm
@@ -101,8 +89,6 @@ def wheelToTurn₂ (wheel : Wheel C) (A : C) : (rightDual A ⟶ rightDual A) ≃
 /-- The composition of `wheelToTurn₁` and `wheelToTurn₂` is identity. -/
 lemma wheelToTurnLemma₁ (wheel : Wheel C) (A : C) :
   (wheelToTurn₁ C wheel A) (𝟙 (leftDual A)) ≫ (wheelToTurn₂ C wheel A) (𝟙 (rightDual A)) = 𝟙 (leftDual A) := by
-  letI := D.leftClosed
-  letI := D.rightClosed
   unfold wheelToTurn₁ wheelToTurn₂
   set wheelA := wheel.wheel A (leftDual A) (leval A) with hWheelA
   set wheelB := (wheel.wheel A (rightDual A)).symm (reval A) with hWheelB
@@ -132,8 +118,6 @@ lemma wheelToTurnLemma₁ (wheel : Wheel C) (A : C) :
 /-- The composition of `wheelToTurn₂` and `wheelToTurn₁` is identity. -/
 lemma wheelToTurnLemma₂ (wheel : Wheel C) (A : C) :
   (wheelToTurn₂ C wheel A) (𝟙 (rightDual A)) ≫ (wheelToTurn₁ C wheel A) (𝟙 (leftDual A)) = 𝟙 (rightDual A) := by
-  letI := D.leftClosed
-  letI := D.rightClosed
   unfold wheelToTurn₁ wheelToTurn₂
   set wheelA := wheel.wheel A (leftDual A) (leval A) with hWheelA
   set wheelB := (wheel.wheel A (rightDual A)).symm (reval A) with hWheelB
@@ -167,8 +151,6 @@ The following establishes the equivalence between turns and wheels in any dialog
 def TurnEquivWheel : Turn C ≃ Wheel C where
   toFun t := wheelToTurn C t
   invFun w :=
-    letI := D.leftClosed
-    letI := D.rightClosed
     match w with
       | { wheel, wheelNatInA, wheelNatInB } =>
         Turn.mk
@@ -178,7 +160,6 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
              (wheelToTurnLemma₁ C w A)
              (wheelToTurnLemma₂ C w A))
           (fun {A B} f => by
-            letI := D.leftClosed; letI := D.rightClosed
             show HasLeftIhom.contramap f ≫
                   HasRightIhom.homEquiv (leftDual B) (w.wheel B (leftDual B) (leval B)) =
                   HasRightIhom.homEquiv (leftDual A) (w.wheel A (leftDual A) (leval A)) ≫ HasRightIhom.contramap f
@@ -211,7 +192,6 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
     simp
   right_inv wheel := by
     ext A B f
-    letI := D.leftClosed; letI := D.rightClosed
     show (HasRightIhom.homEquiv B).symm (HasLeftIhom.homEquiv B f ≫ wheelToTurn₁ C wheel A (𝟙 (leftDual A))) = wheel.wheel A B f
     set fromBtoLeftDualA := HasLeftIhom.homEquiv B f with hk
     set wheelA := wheel.wheel A (leftDual A) (leval A) with hwheelA
@@ -235,7 +215,6 @@ lemma nameConnectedWithTurn (A B : C) [p : PrepivotalCategory C] (f : A ⊗ B �
   ((ρ_ B).inv ⊗ₘ 𝟙 A) ≫ ((𝟙 B ⊗ₘ (leftName (A ⊗ B) f)) ⊗ₘ 𝟙 A) ≫
   ((lev B A) ⊗ₘ 𝟙 A) ≫
   ((p.turn.turn A).hom ⊗ₘ 𝟙 A) ≫ reval A := by
-  letI := D.leftClosed; letI := D.rightClosed
   simp
   slice_rhs 2 3 => rw [associator_inv_naturality_middle B (leftName (A ⊗ B) f) A]
   rw [Category.assoc, Category.assoc, Category.assoc]
@@ -259,8 +238,6 @@ lemma nameConnectedWithTurn (A B : C) [p : PrepivotalCategory C] (f : A ⊗ B �
 lemma wheel_via_turn_evals (A : C) [p : PrepivotalCategory C] :
   turnToWheel₁ C p.turn A (leftDual A) (leval A) =
   ((p.turn.turn A).hom ⊗ₘ 𝟙 A) ≫ reval A := by
-  letI := D.leftClosed
-  letI := D.rightClosed
   show (HasRightIhom.homEquiv (leftDual A)).symm (HasLeftIhom.homEquiv (leftDual A) (leval A) ≫ (p.turn.turn A).hom) =
     ((p.turn.turn A).hom ⊗ₘ 𝟙 A) ≫ reval A
   have hcurry : HasLeftIhom.homEquiv (leftDual A) (leval A) = 𝟙 (leftDual A) := Equiv.apply_symm_apply _ _
