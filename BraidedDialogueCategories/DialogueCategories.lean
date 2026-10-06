@@ -5,6 +5,7 @@ public import Mathlib.CategoryTheory.Monad.Basic
 public import Mathlib.CategoryTheory.Monad.Adjunction
 public import Mathlib.CategoryTheory.Monoidal.Category
 public import BraidedDialogueCategories.InternalHoms
+public import BraidedDialogueCategories.MonadicStrength
 
 @[expose] public section
 
@@ -48,6 +49,63 @@ abbrev leval (A : C) : A ⊗ leftDual A ⟶ bot :=
 
 lemma leval_eq_eval (A : C) :
   leval A = HasLeftIhom.leftEval (A := A) (B := D.bot) := rfl
+
+/-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
+def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
+  HasRightIhom.evalRight (A := A) (B := DialogueCategory.bot)
+
+/-- The useful tautological equality for `reval` explicitly identifying `reval`
+with `HasRightIhom.evalRight` with `B` instantiated with `D.bot`. -/
+lemma reval_eq_eval (A : C) :
+  reval A = HasRightIhom.evalRight (A := A) (B := D.bot) := rfl
+
+def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
+  HasLeftIhom.homEquiv (B ⊗ leftDual (A ⊗ B))
+      ((associator A B (leftDual (A ⊗ B))).inv ≫
+        leval (A ⊗ B))
+
+/-- The useful combinator obtained from the right evaluation. -/
+def rev (A B : C) : (rightDual (A ⊗ B)) ⊗ A ⟶ rightDual B :=
+  HasRightIhom.homEquiv (rightDual (A ⊗ B) ⊗ A)
+    ((associator (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
+
+/-- The currification of the left negation. -/
+def leftName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ leftDual A :=
+  HasLeftIhom.homEquiv (𝟙_ C) ((rightUnitor A).hom ≫ f)
+
+/-- The exponentiation property for `leftName`. -/
+lemma leftNameUncurry (A : C) (f : A ⟶ bot) :
+    ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A = (rightUnitor A).hom ≫ f := by
+  let e₀ := HasLeftIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
+  let e₁ := HasLeftIhom.homEquiv (A := A) (B := D.bot) (leftDual A)
+  apply e₀.injective
+  let e₂ := HasLeftIhom.homEquivNaturalityₗ (A := A) (B := D.bot) (f := leftName A f) (g := leval A)
+  rw [e₂]
+  change leftName A f ≫ e₁ (e₁.symm (𝟙 (leftDual A))) = e₀ ((rightUnitor A).hom ≫ f)
+  rw [e₁.apply_symm_apply]
+  simp [leftName, e₀]
+
+lemma leftNameFact (A : C) (f : A ⟶ bot) : f = (rightUnitor A).inv ≫ ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A := by
+  rw [leftNameUncurry]; simp
+
+/-- The currification of right negation. -/
+def rightName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ rightDual A :=
+  HasRightIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C) ((leftUnitor A).hom ≫ f)
+
+/-- The exponentiation property for `rightName`. -/
+lemma rightNameUncurry (A : C) (f : A ⟶ bot) :
+  (rightName A f ⊗ₘ (𝟙 A)) ≫ reval A = (leftUnitor A).hom ≫ f := by
+  let e₀ := HasRightIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
+  let e₁ := HasRightIhom.homEquiv (A := A) (B := D.bot) (rightDual A)
+  apply e₀.injective
+  let e₂ := HasRightIhom.homEquivNaturalityᵣ (A := A) (B := D.bot) (f := rightName A f) (g := reval A)
+  rw [e₂]
+  change rightName A f ≫ e₁ (e₁.symm (𝟙 (rightDual A))) = e₀ ((leftUnitor A).hom ≫ f)
+  rw [e₁.apply_symm_apply]
+  simp [rightName, e₀]
+
+lemma rightNameFact (A : C) (f : A ⟶ bot) : f = (leftUnitor A).inv ≫ (rightName A f ⊗ₘ (𝟙 A)) ≫ reval A := by
+  rw [rightNameUncurry]; simp
 
 /-- `leftDual` as a contravariant functor. It's called `L` in Melliés's manuscript.  -/
 def L : C ⥤ Cᵒᵖ where
@@ -147,61 +205,20 @@ def monadT' : Monad C := Adjunction.toMonad dialogueAdjunctionOp
 /-- The underlying functor of `monadT'`. -/
 def T' : C ⥤ C := monadT'.toFunctor
 
-/-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
-def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
-  HasRightIhom.evalRight (A := A) (B := DialogueCategory.bot)
+/-- TODO -/
+instance : RightStrength monadT (C := C) where
+  rightStrength A B := sorry
+  rightStrengthEq₁ := sorry
+  rightStrengthEq₂ := sorry
+  rightStrengthNaturality := sorry
 
-/-- The useful tautological equality for `reval` explicitly identifying `reval`
-with `HasRightIhom.evalRight` with `B` instantiated with `D.bot`. -/
-lemma reval_eq_eval (A : C) :
-  reval A = HasRightIhom.evalRight (A := A) (B := D.bot) := rfl
+/-- TODO -/
+instance : LeftStrength monadT' (C := C) where
+  leftStrength := sorry
+  leftStrengthEq₁ := sorry
+  leftStrengthEq₂ := sorry
+  leftStrengthNaturality := sorry
 
-def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
-  HasLeftIhom.homEquiv (B ⊗ leftDual (A ⊗ B))
-      ((associator A B (leftDual (A ⊗ B))).inv ≫
-        leval (A ⊗ B))
-
-/-- The useful combinator obtained from the right evaluation. -/
-def rev (A B : C) : (rightDual (A ⊗ B)) ⊗ A ⟶ rightDual B :=
-  HasRightIhom.homEquiv (rightDual (A ⊗ B) ⊗ A) ((associator (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
-
-/-- The currification of the left negation. -/
-def leftName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ leftDual A :=
-  HasLeftIhom.homEquiv (𝟙_ C) ((rightUnitor A).hom ≫ f)
-
-/-- The exponentiation property for `leftName`. -/
-lemma leftNameUncurry (A : C) (f : A ⟶ bot) :
-    ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A = (rightUnitor A).hom ≫ f := by
-  let e₀ := HasLeftIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
-  let e₁ := HasLeftIhom.homEquiv (A := A) (B := D.bot) (leftDual A)
-  apply e₀.injective
-  let e₂ := HasLeftIhom.homEquivNaturalityₗ (A := A) (B := D.bot) (f := leftName A f) (g := leval A)
-  rw [e₂]
-  change leftName A f ≫ e₁ (e₁.symm (𝟙 (leftDual A))) = e₀ ((rightUnitor A).hom ≫ f)
-  rw [e₁.apply_symm_apply]
-  simp [leftName, e₀]
-
-lemma leftNameFact (A : C) (f : A ⟶ bot) : f = (rightUnitor A).inv ≫ ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A := by
-  rw [leftNameUncurry]; simp
-
-/-- The currification of right negation. -/
-def rightName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ rightDual A :=
-  HasRightIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C) ((leftUnitor A).hom ≫ f)
-
-/-- The exponentiation property for `rightName`. -/
-lemma rightNameUncurry (A : C) (f : A ⟶ bot) :
-  (rightName A f ⊗ₘ (𝟙 A)) ≫ reval A = (leftUnitor A).hom ≫ f := by
-  let e₀ := HasRightIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
-  let e₁ := HasRightIhom.homEquiv (A := A) (B := D.bot) (rightDual A)
-  apply e₀.injective
-  let e₂ := HasRightIhom.homEquivNaturalityᵣ (A := A) (B := D.bot) (f := rightName A f) (g := reval A)
-  rw [e₂]
-  change rightName A f ≫ e₁ (e₁.symm (𝟙 (rightDual A))) = e₀ ((leftUnitor A).hom ≫ f)
-  rw [e₁.apply_symm_apply]
-  simp [rightName, e₀]
-
-lemma rightNameFact (A : C) (f : A ⟶ bot) : f = (leftUnitor A).inv ≫ (rightName A f ⊗ₘ (𝟙 A)) ≫ reval A := by
-  rw [rightNameUncurry]; simp
 end DialogueCategory
 
 open DialogueCategory in

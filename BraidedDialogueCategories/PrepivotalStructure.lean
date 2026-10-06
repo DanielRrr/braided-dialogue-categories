@@ -150,9 +150,8 @@ The following establishes the equivalence between turns and wheels in any dialog
 -/
 def TurnEquivWheel : Turn C ≃ Wheel C where
   toFun t := wheelToTurn C t
-  invFun w :=
-    match w with
-      | { wheel, wheelNatInA, wheelNatInB } =>
+  invFun
+    | w@{ wheel, wheelNatInA, wheelNatInB } =>
         Turn.mk
           (fun A => CategoryTheory.Iso.mk
              (wheelToTurn₁ C w A (𝟙 (leftDual A)))
@@ -209,8 +208,10 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
 def prepivotalWithWheel (C : Type v) [Category.{v,v} C] [m : MonoidalCategory.{v} C] [DialogueCategory.{v} C] (wheel : Wheel C) : PrepivotalCategory C where
   turn := (TurnEquivWheel C).symm wheel
 
+variable [p : PrepivotalCategory C]
+
 /-- The connection between `turn`,`turnToWheel₁`, `leftName` and `reval` -/
-lemma nameConnectedWithTurn (A B : C) [p : PrepivotalCategory C] (f : A ⊗ B ⟶ D.bot) :
+lemma nameConnectedWithTurn (A B : C) (f : A ⊗ B ⟶ D.bot) :
   turnToWheel₁ C p.turn A B f =
   ((ρ_ B).inv ⊗ₘ 𝟙 A) ≫ ((𝟙 B ⊗ₘ (leftName (A ⊗ B) f)) ⊗ₘ 𝟙 A) ≫
   ((lev B A) ⊗ₘ 𝟙 A) ≫
@@ -235,7 +236,7 @@ lemma nameConnectedWithTurn (A B : C) [p : PrepivotalCategory C] (f : A ⊗ B �
   rw [← Category.assoc, ← comp_whiskerRight ((HasLeftIhom.homEquiv B) f) (PrepivotalCategory.turn.turn A).hom A, HasRightIhom.symm_apply_eq]
   simp
 
-lemma wheel_via_turn_evals (A : C) [p : PrepivotalCategory C] :
+lemma wheel_via_turn_evals (A : C) :
   turnToWheel₁ C p.turn A (leftDual A) (leval A) =
   ((p.turn.turn A).hom ⊗ₘ 𝟙 A) ≫ reval A := by
   show (HasRightIhom.homEquiv (leftDual A)).symm (HasLeftIhom.homEquiv (leftDual A) (leval A) ≫ (p.turn.turn A).hom) =
@@ -243,5 +244,10 @@ lemma wheel_via_turn_evals (A : C) [p : PrepivotalCategory C] :
   have hcurry : HasLeftIhom.homEquiv (leftDual A) (leval A) = 𝟙 (leftDual A) := Equiv.apply_symm_apply _ _
   rw [hcurry, Category.id_comp, HasRightIhom.symm_apply_eq]
   simp; rfl
+
+/-- TODO: Paul-André's formulation from the draft of the lemma is incomplete as it uses undeclared entities. -/
+lemma wheel_reval_lemma (A : C) :
+  turnToWheel₁ C p.turn (rightDual A) A (reval A) = sorry := by
+  sorry
 
 end DialogueCategory
