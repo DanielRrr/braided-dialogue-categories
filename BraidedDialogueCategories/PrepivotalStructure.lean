@@ -32,7 +32,7 @@ class PrepivotalCategory (C : Type v) [Category.{v} C] [MonoidalCategory.{v} C] 
 variable (C : Type v) [Category.{v} C] [MonoidalCategory C] [D : DialogueCategory.{v} C]
 
 /-- Getting a wheel from a turn. -/
-def turnToWheel₁ (t : Turn C) (A B : C) (f : A ⊗ B ⟶ D.bot) :
+@[simp] def turnToWheel₁ (t : Turn C) (A B : C) (f : A ⊗ B ⟶ D.bot) :
   (B ⊗ A ⟶ D.bot) :=
   (HasRightIhom.homEquiv B).symm ((HasLeftIhom.homEquiv B).toFun f ≫ (t.turn A).hom)
 
@@ -51,23 +51,22 @@ lemma turnToWheel_rightInv (t : Turn C) (A B : C) :  Function.RightInverse (turn
   intro
   simp [turnToWheel₁, turnToWheel₂]
 
+/-- Rephrasing the turn naturality via contramap. -/
+@[simp] lemma left_turn_right {A B : C} (t : Turn C) (f : A ⟶ B) : HasLeftIhom.contramap f ≫ (t.turn A).hom = (t.turn B).hom ≫ HasRightIhom.contramap f := by
+  exact t.turnNaturality f
+
 /-- The first key lemma in showing naturality in the proof that turns in dialogue categories induce wheels. -/
 lemma turnToWheelNat₁ (t : Turn C) (A₁ A₂ B : C) (f : A₁ ⟶ A₂) (g : A₂ ⊗ B ⟶ bot) :
     turnToWheel₁ C t A₁ B (f ▷ B ≫ g) = B ◁ f ≫ turnToWheel₁ C t A₂ B g := by
-  have hturn : HasLeftIhom.contramap f ≫ (t.turn A₁).hom = (t.turn A₂).hom ≫ HasRightIhom.contramap f := by
-    exact t.turnNaturality f
-  show (HasRightIhom.homEquiv B).symm (HasLeftIhom.homEquiv B (f ▷ B ≫ g) ≫ (t.turn A₁).hom) =
-    B ◁ f ≫ (HasRightIhom.homEquiv B).symm (HasLeftIhom.homEquiv B g ≫ (t.turn A₂).hom)
-  rw [← MonoidalCategory.tensorHom_id, HasLeftIhom.homEquiv_naturality_left f g, Category.assoc, hturn, ← Category.assoc, ← MonoidalCategory.id_tensorHom]
+  simp [turnToWheel₁]
+  rw [← MonoidalCategory.tensorHom_id, HasLeftIhom.homEquiv_naturality_left f g,
+      Category.assoc, left_turn_right, ← Category.assoc, ← MonoidalCategory.id_tensorHom]
   exact (HasRightIhom.symm_naturality_left f _).symm
 
 /-- The second key lemma in showing naturality in the proof that turns in dialogue categories induce wheels. -/
 lemma turnToWheelNat₂ (t : Turn C) (A B₁ B₂ : C) (g : B₁ ⟶ B₂) (f : A ⊗ B₂ ⟶ bot)
   : turnToWheel₁ C t A B₁ (A ◁ g ≫ f) = g ▷ A ≫ turnToWheel₁ C t A B₂ f := by
-  show
-    (HasRightIhom.homEquiv B₁).symm ((HasLeftIhom.homEquiv B₁)
-        (A ◁ g ≫ f) ≫ (t.turn A).hom) = g ▷ A ≫
-      (HasRightIhom.homEquiv B₂).symm ((HasLeftIhom.homEquiv B₂) f ≫ (t.turn A).hom)
+  simp [turnToWheel₁]
   rw [← MonoidalCategory.id_tensorHom, HasLeftIhom.homEquivNaturalityₗ, Category.assoc]
   apply (HasRightIhom.homEquiv B₁).injective
   simp [HasRightIhom.symm_apply_eq]
@@ -86,55 +85,62 @@ def wheelToTurn₂ (wheel : Wheel C) (A : C) : (rightDual A ⟶ rightDual A) ≃
   _ ≃ (A ⊗ rightDual A ⟶ bot) := (wheel.wheel A (rightDual A)).symm
   _ ≃ (rightDual A ⟶ leftDual A) := HasLeftIhom.homEquiv (rightDual A)
 
-/-- The composition of `wheelToTurn₁` and `wheelToTurn₂` is identity. -/
-lemma wheelToTurnLemma₁ (wheel : Wheel C) (A : C) :
-  (wheelToTurn₁ C wheel A) (𝟙 (leftDual A)) ≫ (wheelToTurn₂ C wheel A) (𝟙 (rightDual A)) = 𝟙 (leftDual A) := by
-  unfold wheelToTurn₁ wheelToTurn₂
-  set wheelA := wheel.wheel A (leftDual A) (leval A) with hWheelA
-  set wheelB := (wheel.wheel A (rightDual A)).symm (reval A) with hWheelB
-  set p : leftDual A ⟶ rightDual A := HasRightIhom.homEquiv (leftDual A) wheelA with hp
-  set q : rightDual A ⟶ leftDual A := HasLeftIhom.homEquiv (rightDual A) wheelB with hq
-  show p ≫ q = 𝟙 (leftDual A)
+/-- The wheel of the left evaluation map. -/
+def wheel_leval (wheel : Wheel C) (A : C) := wheel.wheel A (leftDual A) (leval A)
+
+/-- The wheel of the right evaluation map. -/
+def wheel_reval (wheel : Wheel C) (A : C) := (wheel.wheel A (rightDual A)).symm (reval A)
+
+/-- mapping the left dual to the right dual via the right internal hom definition applied to
+the wheel of the left evaluation map -/
+def left_to_right (wheel : Wheel C) (A : C) : leftDual A ⟶ rightDual A :=
+  HasRightIhom.homEquiv (leftDual A) (wheel_leval C wheel A)
+
+/-- Mapping the right dual to the left dual via the left internal hom definition applied to
+the wheel of the right evaluation map. -/
+def right_to_left (wheel : Wheel C) (A : C) : rightDual A ⟶ leftDual A :=
+  HasLeftIhom.homEquiv (rightDual A) (wheel_reval C wheel A)
+
+/-- The composition of `left_to_right` and `right_to_left` is identity. -/
+lemma left_to_right_to_left_id (wheel : Wheel C) (A : C) : left_to_right C wheel A ≫ right_to_left C wheel A = 𝟙 (leftDual A) := by
   apply (HasLeftIhom.homEquiv (leftDual A)).symm.injective
-  show (HasLeftIhom.homEquiv (leftDual A)).symm (p ≫ q) = leval A
-  rw [HasLeftIhom.symm_comp p q]
-  have hq' : (HasLeftIhom.homEquiv (rightDual A)).symm q = wheelB := by
-    rw [hq, Equiv.symm_apply_apply]
+  -- now we must show that `(homEquiv (leftDual A)).symm (left_to_right ≫ right_to_left) = (homEquiv (leftDual A)).symm (𝟙 (leftDual A))`:
+  show (HasLeftIhom.homEquiv (leftDual A)).symm (left_to_right C wheel A ≫ right_to_left C wheel A) = leval A
+  rw [HasLeftIhom.symm_comp (left_to_right C wheel A) (right_to_left C wheel A)]
+  -- observe that the wheel of the right evaluation map is equal to `homEquiv (rightDual A)` applied to `right_to_left`:
+  have hq' : (HasLeftIhom.homEquiv (rightDual A)).symm (right_to_left C wheel A)  = wheel_reval C wheel A := by
+    rw [right_to_left, Equiv.symm_apply_apply]
   rw [hq']
-  have hnat := wheel.wheelNatInB p wheelB
-  have hrw : wheel.wheel A (rightDual A) wheelB = reval A := by
-    rw [hWheelB, Equiv.apply_symm_apply]
+  -- instantiate the naturality of `wheel` for `left_to_right` and `wheel_reval`:
+  have hnat := wheel.wheelNatInB (left_to_right C wheel A) (wheel_reval C wheel A)
+  -- expressing `reval` with the wheel applied to the wheel of the right evaluation map
+  have hrw : wheel.wheel A (rightDual A) (wheel_reval C wheel A) = reval A := by
+    rw [wheel_reval, Equiv.apply_symm_apply]
   rw [hrw] at hnat
   have hwheel :
-      (𝟙 A ⊗ₘ p) ≫ wheelB = (wheel.wheel A (leftDual A)).symm ((p ⊗ₘ 𝟙 A) ≫ reval A) := by
+      (𝟙 A ⊗ₘ left_to_right C wheel A) ≫ wheel_reval C wheel A = (wheel.wheel A (leftDual A)).symm ((left_to_right C wheel A ⊗ₘ 𝟙 A) ≫ reval A) := by
     apply (wheel.wheel A (leftDual A)).injective
     rw [Equiv.apply_symm_apply]
     exact hnat
   rw [hwheel]
-  have hp' : (p ⊗ₘ 𝟙 A) ≫ reval A = wheelA := by
-    rw [hp, reval_eq_eval, HasRightIhom.uncurry_curry]
-  rw [hp', hWheelA, Equiv.symm_apply_apply]
+  have hp' : (left_to_right C wheel A ⊗ₘ 𝟙 A) ≫ reval A = wheel_leval C wheel A := by
+    rw [left_to_right, reval_eq_eval, HasRightIhom.uncurry_curry]
+  rw [hp', wheel_leval, Equiv.symm_apply_apply]
 
 /-- The composition of `wheelToTurn₂` and `wheelToTurn₁` is identity. -/
-lemma wheelToTurnLemma₂ (wheel : Wheel C) (A : C) :
-  (wheelToTurn₂ C wheel A) (𝟙 (rightDual A)) ≫ (wheelToTurn₁ C wheel A) (𝟙 (leftDual A)) = 𝟙 (rightDual A) := by
-  unfold wheelToTurn₁ wheelToTurn₂
-  set wheelA := wheel.wheel A (leftDual A) (leval A) with hWheelA
-  set wheelB := (wheel.wheel A (rightDual A)).symm (reval A) with hWheelB
-  set p : leftDual A ⟶ rightDual A := HasRightIhom.homEquiv (leftDual A) wheelA with hp
-  set q : rightDual A ⟶ leftDual A := HasLeftIhom.homEquiv (rightDual A) wheelB with hq
-  show q ≫ p = 𝟙 (rightDual A)
+lemma right_to_left_to_right_id (wheel : Wheel C) (A : C) :
+  (right_to_left C wheel A) ≫ (left_to_right C wheel A) = 𝟙 (rightDual A) := by
   apply (HasRightIhom.homEquiv (rightDual A)).symm.injective
-  show (HasRightIhom.homEquiv (rightDual A)).symm (q ≫ p) = reval A
+  show (HasRightIhom.homEquiv (rightDual A)).symm (right_to_left C wheel A ≫ left_to_right C wheel A) = reval A
   rw [HasRightIhom.symm_comp]
-  have hp' : (HasRightIhom.homEquiv (leftDual A)).symm p = wheelA := by
-    rw [Equiv.symm_apply_apply]
+  have hp' : (HasRightIhom.homEquiv (leftDual A)).symm (left_to_right C wheel A) = (wheel_leval C wheel A) := by
+    apply Equiv.symm_apply_apply
   rw [hp']
-  have huncurry : (𝟙 A ⊗ₘ q) ≫ leval A = wheelB := by rw [hq, leval_eq_eval, HasLeftIhom.uncurry_curry]
-  have hnat := wheel.wheelNatInB q (leval A)
+  have huncurry : (𝟙 A ⊗ₘ right_to_left C wheel A) ≫ leval A = (wheel_reval C wheel A) := by rw [right_to_left, leval_eq_eval, HasLeftIhom.uncurry_curry]
+  have hnat := wheel.wheelNatInB (right_to_left C wheel A) (leval A)
   rw [huncurry] at hnat
-  have hrw : wheel.wheel A (rightDual A) wheelB = reval A := by
-    rw [hWheelB, Equiv.apply_symm_apply]
+  have hrw : wheel.wheel A (rightDual A) (wheel_reval C wheel A) = reval A := by
+    rw [wheel_reval, Equiv.apply_symm_apply]
   rw [hrw] at hnat
   exact hnat.symm
 
@@ -156,8 +162,8 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
           (fun A => CategoryTheory.Iso.mk
              (wheelToTurn₁ C w A (𝟙 (leftDual A)))
              (wheelToTurn₂ C w A (𝟙 (rightDual A)))
-             (wheelToTurnLemma₁ C w A)
-             (wheelToTurnLemma₂ C w A))
+             (left_to_right_to_left_id C w A)
+             (right_to_left_to_right_id C w A))
           (fun {A B} f => by
             show HasLeftIhom.contramap f ≫
                   HasRightIhom.homEquiv (leftDual B) (w.wheel B (leftDual B) (leval B)) =
@@ -232,7 +238,7 @@ lemma nameConnectedWithTurn (A B : C) (f : A ⊗ B ⟶ D.bot) :
     rw [← Category.assoc, ← whiskerLeft_rightUnitor]
   have idWhisker : A ◁ (ρ_ B).hom = 𝟙 A ⊗ₘ (ρ_ B).hom := by simp
   slice_rhs 2 3 => rw [idWhisker, HasLeftIhom.homEquivNaturalityₗ]
-  simp; unfold turnToWheel₁ reval; simp
+  simp; unfold reval;
   rw [← Category.assoc, ← comp_whiskerRight ((HasLeftIhom.homEquiv B) f) (PrepivotalCategory.turn.turn A).hom A, HasRightIhom.symm_apply_eq]
   simp
 

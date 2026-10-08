@@ -61,8 +61,7 @@ lemma reval_eq_eval (A : C) :
 
 def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
   HasLeftIhom.homEquiv (B ⊗ leftDual (A ⊗ B))
-      ((associator A B (leftDual (A ⊗ B))).inv ≫
-        leval (A ⊗ B))
+      ((associator A B (leftDual (A ⊗ B))).inv ≫ leval (A ⊗ B))
 
 /-- The useful combinator obtained from the right evaluation. -/
 def rev (A B : C) : (rightDual (A ⊗ B)) ⊗ A ⟶ rightDual B :=
@@ -76,13 +75,22 @@ def leftName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ leftDual A :=
 /-- The exponentiation property for `leftName`. -/
 lemma leftNameUncurry (A : C) (f : A ⟶ bot) :
     ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A = (rightUnitor A).hom ≫ f := by
+  -- We have a (A ⊗ 𝟙_ C ⟶ bot) ≃ (𝟙_ C ⟶ internalHomₗ A bot)
   let e₀ := HasLeftIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
+  -- We also have a bijection (A ⊗ leftDual A ⟶ bot) ≃ (leftDual A ⟶ internalHomₗ A bot)
   let e₁ := HasLeftIhom.homEquiv (A := A) (B := D.bot) (leftDual A)
+  -- e₀ is injective, so we must show `e₀ ((𝟙 A ⊗ₘ leftName A f) ≫ leval A) = e₀ ((ρ_ A).hom ≫ f)`
   apply e₀.injective
+  -- we have the equality
+  -- `(HasLeftIhom.homEquiv (𝟙_ C)) ((𝟙 A ⊗ₘ leftName A f) ≫ leval A) = leftName A f ≫ (HasLeftIhom.homEquiv (leftDual A)) (leval A)`
   let e₂ := HasLeftIhom.homEquivNaturalityₗ (A := A) (B := D.bot) (f := leftName A f) (g := leval A)
   rw [e₂]
+  -- After applying e₂, we must show leftName A f ≫ (HasLeftIhom.homEquiv (leftDual A)) (leval A) = e₀ ((ρ_ A).hom ≫ f),
+  -- but the left-hand side of the equality is equal to
   change leftName A f ≫ e₁ (e₁.symm (𝟙 (leftDual A))) = e₀ ((rightUnitor A).hom ≫ f)
+  -- we must show `leftName A f ≫ e₁ (e₁.symm (𝟙 (leftDual A))) = e₀ ((ρ_ A).hom ≫ f)`,
   rw [e₁.apply_symm_apply]
+  -- we must show `leftName A f ≫ 𝟙 (leftDual A) = e₀ ((ρ_ A).hom ≫ f)`
   simp [leftName, e₀]
 
 lemma leftNameFact (A : C) (f : A ⟶ bot) : f = (rightUnitor A).inv ≫ ((𝟙 A) ⊗ₘ leftName A f) ≫ leval A := by
@@ -92,14 +100,20 @@ lemma leftNameFact (A : C) (f : A ⟶ bot) : f = (rightUnitor A).inv ≫ ((𝟙 
 def rightName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ rightDual A :=
   HasRightIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C) ((leftUnitor A).hom ≫ f)
 
-/-- The exponentiation property for `rightName`. -/
+/-- The exponentiation property for `rightName` for a morphism `f : A ⟶ bot` for any `A`. -/
 lemma rightNameUncurry (A : C) (f : A ⟶ bot) :
   (rightName A f ⊗ₘ (𝟙 A)) ≫ reval A = (leftUnitor A).hom ≫ f := by
+  -- we have the bijection `(𝟙_ C ⊗ A ⟶ bot) ≃ (𝟙_ C ⟶ internalHomᵣ A bot)`
   let e₀ := HasRightIhom.homEquiv (A := A) (B := D.bot) (𝟙_ C)
+  -- we have the bijection `(rightDual A ⊗ A ⟶ bot) ≃ (rightDual A ⟶ internalHomᵣ A bot)`
   let e₁ := HasRightIhom.homEquiv (A := A) (B := D.bot) (rightDual A)
   apply e₀.injective
+  -- we must show that `e₀ ((rightName A f ⊗ₘ 𝟙 A) ≫ reval A) = e₀ ((λ_ A).hom ≫ f)`.
+
+  -- We have `(HasRightIhom.homEquiv (𝟙_ C)) ((rightName A f ⊗ₘ 𝟙 A) ≫ reval A) = rightName A f ≫ (HasRightIhom.homEquiv (rightDual A)) (reval A)`
   let e₂ := HasRightIhom.homEquivNaturalityᵣ (A := A) (B := D.bot) (f := rightName A f) (g := reval A)
   rw [e₂]
+  -- The current goal is `rightName A f ≫ (HasRightIhom.homEquiv (rightDual A)) (reval A) = e₀ ((λ_ A).hom ≫ f)`
   change rightName A f ≫ e₁ (e₁.symm (𝟙 (rightDual A))) = e₀ ((leftUnitor A).hom ≫ f)
   rw [e₁.apply_symm_apply]
   simp [rightName, e₀]
