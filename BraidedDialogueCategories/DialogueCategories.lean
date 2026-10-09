@@ -50,6 +50,12 @@ abbrev leval (A : C) : A ⊗ leftDual A ⟶ bot :=
 lemma leval_eq_eval (A : C) :
   leval A = HasLeftIhom.leftEval (A := A) (B := D.bot) := rfl
 
+def leftDualMap {A B : C} (f : A ⟶ B) : leftDual B ⟶ leftDual A :=
+  HasLeftIhom.contramap (B := D.bot) f
+
+def rightDualMap {A B : C} (f : A ⟶ B) : rightDual B ⟶ rightDual A :=
+  HasRightIhom.contramap (B := D.bot) f
+
 /-- The right evaluation arrow `[A, bot]ᵣ ⊗ A ⟶ bot`-/
 def reval (A : C) : rightDual A ⊗ A ⟶ bot :=
   HasRightIhom.evalRight (A := A) (B := DialogueCategory.bot)
@@ -61,12 +67,28 @@ lemma reval_eq_eval (A : C) :
 
 def lev (B A : C) : B ⊗ leftDual (A ⊗ B) ⟶ leftDual A :=
   HasLeftIhom.homEquiv (B ⊗ leftDual (A ⊗ B))
-      ((associator A B (leftDual (A ⊗ B))).inv ≫ leval (A ⊗ B))
+      ((α_ A B (leftDual (A ⊗ B))).inv ≫ leval (A ⊗ B))
+
+lemma contramapEval' {A₁ A₂ : C} (f : A₁ ⟶ A₂) :
+    (𝟙 A₁ ⊗ₘ leftDualMap f) ≫ HasLeftIhom.leftEval = (f ⊗ₘ 𝟙 (leftDual A₂)) ≫ HasLeftIhom.leftEval := by
+  rw [leftDualMap]
+  exact HasLeftIhom.uncurry_curry _
+
+lemma levUncurry (B A : C) :
+    (𝟙 A ⊗ₘ lev B A) ≫ leval A =
+      (associator A B (leftDual (A ⊗ B))).inv ≫ leval (A ⊗ B) := by
+  rw [lev]
+  exact HasLeftIhom.uncurry_curry _
 
 /-- The useful combinator obtained from the right evaluation. -/
 def rev (A B : C) : (rightDual (A ⊗ B)) ⊗ A ⟶ rightDual B :=
   HasRightIhom.homEquiv (rightDual (A ⊗ B) ⊗ A)
-    ((associator (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
+    ((α_ (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B))
+
+lemma revUncurry (A B : C) :
+    (rev A B ⊗ₘ 𝟙 B) ≫ reval B = (α_ (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B) := by
+  rw [rev]
+  exact HasRightIhom.uncurry_curry _
 
 /-- The currification of the left negation. -/
 def leftName (A : C) (f : A ⟶ bot) : (𝟙_ C) ⟶ leftDual A :=
@@ -113,7 +135,7 @@ lemma rightNameUncurry (A : C) (f : A ⟶ bot) :
   -- We have `(HasRightIhom.homEquiv (𝟙_ C)) ((rightName A f ⊗ₘ 𝟙 A) ≫ reval A) = rightName A f ≫ (HasRightIhom.homEquiv (rightDual A)) (reval A)`
   let e₂ := HasRightIhom.homEquivNaturalityᵣ (A := A) (B := D.bot) (f := rightName A f) (g := reval A)
   rw [e₂]
-  -- The current goal is `rightName A f ≫ (HasRightIhom.homEquiv (rightDual A)) (reval A) = e₀ ((λ_ A).hom ≫ f)`
+  -- The current goal is `rightName A f ≫ (HasRightIhom.homEquiv (rightDual A)) (reval A) = e₀ ((λ_ A).hom ≫ f)`.
   change rightName A f ≫ e₁ (e₁.symm (𝟙 (rightDual A))) = e₀ ((leftUnitor A).hom ≫ f)
   rw [e₁.apply_symm_apply]
   simp [rightName, e₀]
@@ -219,19 +241,43 @@ def monadT' : Monad C := Adjunction.toMonad dialogueAdjunctionOp
 /-- The underlying functor of `monadT'`. -/
 def T' : C ⥤ C := monadT'.toFunctor
 
-/-- TODO -/
+lemma T'_map_eq {A B : C} (f : A ⟶ B) : T'.map f = leftDualMap (rightDualMap f) := rfl
+
+lemma T'_eta_eq (X : C) :
+  monadT'.η.app X = HasLeftIhom.homEquiv (A := rightDual X) (B := D.bot) X (reval X) := rfl
+
+lemma etaUncurry (B : C) :
+    (𝟙 (rightDual B) ⊗ₘ monadT'.η.app B) ≫ leval (rightDual B) = reval B := by
+  rw [T'_eta_eq]
+  exact HasLeftIhom.uncurry_curry _
+
+/-- The monad `T' : C ⥤ C` satisfies the left tensorial strength condition. -/
+instance : LeftStrength monadT' (C := C) where
+  leftStrength A B := (𝟙 A ⊗ₘ leftDualMap (rev A B)) ≫ lev A (rightDual (A ⊗ B))
+  leftStrengthEq₁ A B := by
+    apply (HasLeftIhom.homEquiv (A := rightDual (A ⊗ B)) (B := D.bot) (A ⊗ B)).symm.injective
+    erw [T'_eta_eq, Equiv.symm_apply_apply, HasLeftIhom.symm_comp, HasLeftIhom.symm_comp, Equiv.symm_apply_apply]
+-- goal now: reval (A⊗B) = (𝟙 _ ⊗ₘ (𝟙 A ⊗ₘ monadT'.η.app B)) ≫ (𝟙 _ ⊗ₘ (𝟙 A ⊗ₘ leftDualMap (rev A B))) ≫
+--             (α_ ...).inv ≫ leval (rightDual (A⊗B) ⊗ A)
+    have key :
+      (𝟙 (rightDual (A⊗B)) ⊗ₘ (𝟙 A ⊗ₘ monadT'.η.app B)) ≫
+        (𝟙 (rightDual (A⊗B)) ⊗ₘ (𝟙 A ⊗ₘ leftDualMap (rev A B))) ≫
+          (α_ (rightDual (A⊗B)) A (leftDual (rightDual (A⊗B) ⊗ A))).inv ≫ leval (rightDual (A⊗B) ⊗ A) =
+      reval (A ⊗ B) := by
+      conv_lhs => rw [← Category.assoc, tensorHom_comp_tensorHom, Category.id_comp]
+      sorry
+    exact key.symm
+  leftStrengthEq₂ := sorry
+  leftStrengthAssoc := sorry
+  leftStrengthNaturality := sorry
+
+/-- The monad `T : C ⥤ C` satisfies the right tensorial strength condition. -/
 instance : RightStrength monadT (C := C) where
-  rightStrength A B := sorry
+  rightStrength A B := (rightDualMap (lev B A) ⊗ₘ 𝟙 B) ≫ rev B (leftDual (A ⊗ B))
   rightStrengthEq₁ := sorry
   rightStrengthEq₂ := sorry
+  rightStrengthAssoc := sorry
   rightStrengthNaturality := sorry
-
-/-- TODO -/
-instance : LeftStrength monadT' (C := C) where
-  leftStrength := sorry
-  leftStrengthEq₁ := sorry
-  leftStrengthEq₂ := sorry
-  leftStrengthNaturality := sorry
 
 end DialogueCategory
 
