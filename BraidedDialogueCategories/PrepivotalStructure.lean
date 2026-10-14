@@ -144,7 +144,7 @@ lemma right_to_left_to_right_id (wheel : Wheel C) (A : C) :
   rw [hrw] at hnat
   exact hnat.symm
 
-abbrev wheelToTurn : Turn C → Wheel C
+abbrev turnToWheel : Turn C → Wheel C
   | t => Wheel.mk
          (fun A B => Equiv.mk (turnToWheel₁ C t A B) (turnToWheel₂ C t A B)
               (turnToWheel_leftInv C t A B)
@@ -155,7 +155,7 @@ abbrev wheelToTurn : Turn C → Wheel C
 The following establishes the equivalence between turns and wheels in any dialogue category.
 -/
 def TurnEquivWheel : Turn C ≃ Wheel C where
-  toFun t := wheelToTurn C t
+  toFun t := turnToWheel C t
   invFun
     | w@{ wheel, wheelNatInA, wheelNatInB } =>
         Turn.mk
@@ -193,7 +193,7 @@ def TurnEquivWheel : Turn C ≃ Wheel C where
             rw [leftContraWheel, HasLeftIhom.contramapEval f, w.wheelNatInA f (leval A), hwheelA]
           )
   left_inv turn := by
-    unfold wheelToTurn turnToWheel₁ turnToWheel₂ wheelToTurn₁ wheelToTurn₂
+    unfold turnToWheel turnToWheel₁ turnToWheel₂ wheelToTurn₁ wheelToTurn₂
     simp
   right_inv wheel := by
     ext A B f

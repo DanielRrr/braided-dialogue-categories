@@ -251,22 +251,61 @@ lemma etaUncurry (B : C) :
   rw [T'_eta_eq]
   exact HasLeftIhom.uncurry_curry _
 
+/-- Whiskering the unit and `leftDualMap (rev A B)` together, then evaluating. -/
+lemma strengthKeyH3 (A B : C) :
+    (𝟙 (rightDual (A ⊗ B) ⊗ A) ⊗ₘ (monadT'.η.app B ≫ leftDualMap (rev A B))) ≫
+        leval (rightDual (A ⊗ B) ⊗ A) =
+      (α_ (rightDual (A ⊗ B)) A B).hom ≫ reval (A ⊗ B) := by
+  calc _ = (𝟙 (rightDual (A ⊗ B) ⊗ A) ⊗ₘ monadT'.η.app B) ≫
+          (𝟙 (rightDual (A ⊗ B) ⊗ A) ⊗ₘ leftDualMap (rev A B)) ≫
+            leval (rightDual (A ⊗ B) ⊗ A) := by
+        rw [← Category.assoc]
+        exact congrArg (· ≫ leval (rightDual (A ⊗ B) ⊗ A))
+          (MonoidalCategory.id_tensor_comp _ _)
+    _ = (𝟙 (rightDual (A ⊗ B) ⊗ A) ⊗ₘ monadT'.η.app B) ≫
+            (rev A B ⊗ₘ 𝟙 (leftDual (rightDual B))) ≫ leval (rightDual B) := by
+          congr 1; exact HasLeftIhom.contramapEval (B := D.bot) (rev A B)
+    _ = (rev A B ⊗ₘ 𝟙 B) ≫ (𝟙 (rightDual B) ⊗ₘ monadT'.η.app B) ≫
+            leval (rightDual B) :=
+        (id_tensor_comp_tensor_id_assoc (monadT'.η.app B) (rev A B) _).trans
+            (tensor_id_comp_id_tensor_assoc (monadT'.η.app B) (rev A B) _).symm
+    _ = (rev A B ⊗ₘ 𝟙 B) ≫ reval B := by
+          congr 1; exact etaUncurry B
+    _ = _ := revUncurry A B
+
+/-- Merge the two whiskers into one. -/
+lemma strengthKeyH1 (A B : C) :
+    (𝟙 (rightDual (A ⊗ B)) ⊗ₘ (𝟙 A ⊗ₘ monadT'.η.app B)) ≫
+        (𝟙 (rightDual (A ⊗ B)) ⊗ₘ (𝟙 A ⊗ₘ leftDualMap (rev A B))) =
+      𝟙 (rightDual (A ⊗ B)) ⊗ₘ (𝟙 A ⊗ₘ (monadT'.η.app B ≫ leftDualMap (rev A B))) := by
+  refine (id_tensor_comp _ _).symm.trans ?_
+  exact congrArg (𝟙 (rightDual (A ⊗ B)) ⊗ₘ ·) (id_tensor_comp _ _).symm
+
+/-- Move the whisker through the associator. -/
+lemma strengthKeyH2 (A B : C) :
+    (𝟙 (rightDual (A ⊗ B)) ⊗ₘ (𝟙 A ⊗ₘ (monadT'.η.app B ≫ leftDualMap (rev A B)))) ≫
+        (α_ (rightDual (A ⊗ B)) A (leftDual (rightDual (A ⊗ B) ⊗ A))).inv =
+      (α_ (rightDual (A ⊗ B)) A B).inv ≫
+        (𝟙 (rightDual (A ⊗ B) ⊗ A) ⊗ₘ (monadT'.η.app B ≫ leftDualMap (rev A B))) := by simp
+
+/-- The assembled key identity. -/
+lemma strengthKey (A B : C) :
+    (𝟙 (rightDual (A ⊗ B)) ⊗ₘ (𝟙 A ⊗ₘ monadT'.η.app B)) ≫
+        (𝟙 (rightDual (A ⊗ B)) ⊗ₘ (𝟙 A ⊗ₘ leftDualMap (rev A B))) ≫
+          (α_ (rightDual (A ⊗ B)) A (leftDual (rightDual (A ⊗ B) ⊗ A))).inv ≫
+            leval (rightDual (A ⊗ B) ⊗ A) =
+      reval (A ⊗ B) := by
+  rw [← Category.assoc, strengthKeyH1, ← Category.assoc, strengthKeyH2,
+    Category.assoc, strengthKeyH3, Iso.inv_hom_id_assoc]
+
 /-- The monad `T' : C ⥤ C` satisfies the left tensorial strength condition. -/
 instance : LeftStrength monadT' (C := C) where
   leftStrength A B := (𝟙 A ⊗ₘ leftDualMap (rev A B)) ≫ lev A (rightDual (A ⊗ B))
   leftStrengthEq₁ A B := by
     apply (HasLeftIhom.homEquiv (A := rightDual (A ⊗ B)) (B := D.bot) (A ⊗ B)).symm.injective
-    erw [T'_eta_eq, Equiv.symm_apply_apply, HasLeftIhom.symm_comp, HasLeftIhom.symm_comp, Equiv.symm_apply_apply]
--- goal now: reval (A⊗B) = (𝟙 _ ⊗ₘ (𝟙 A ⊗ₘ monadT'.η.app B)) ≫ (𝟙 _ ⊗ₘ (𝟙 A ⊗ₘ leftDualMap (rev A B))) ≫
---             (α_ ...).inv ≫ leval (rightDual (A⊗B) ⊗ A)
-    have key :
-      (𝟙 (rightDual (A⊗B)) ⊗ₘ (𝟙 A ⊗ₘ monadT'.η.app B)) ≫
-        (𝟙 (rightDual (A⊗B)) ⊗ₘ (𝟙 A ⊗ₘ leftDualMap (rev A B))) ≫
-          (α_ (rightDual (A⊗B)) A (leftDual (rightDual (A⊗B) ⊗ A))).inv ≫ leval (rightDual (A⊗B) ⊗ A) =
-      reval (A ⊗ B) := by
-      conv_lhs => rw [← Category.assoc, tensorHom_comp_tensorHom, Category.id_comp]
-      sorry
-    exact key.symm
+    erw [T'_eta_eq, Equiv.symm_apply_apply, HasLeftIhom.symm_comp, HasLeftIhom.symm_comp,
+    Equiv.symm_apply_apply]
+    exact (strengthKey A B).symm
   leftStrengthEq₂ := sorry
   leftStrengthAssoc := sorry
   leftStrengthNaturality := sorry

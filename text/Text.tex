@@ -169,16 +169,29 @@ Here are some useful combinators:
   \begin{equation}~\label{eq:1}
   \operatorname{turn}_{A_1} \circ \: \mathcal{C}(f,\bot) = \mathcal{C}(f,\bot) \circ \operatorname{turn}_{A_2}
   \end{equation}
-  Further, observe that:
+  which following from the equality
   \begin{equation}~\label{e2:1}
     \psi^{-1}_{B,A_1}(\operatorname{turn}_{A_1} \circ \: \varphi_{A_1,B}(g \circ f \otimes 1_B)) = \psi^{-1}_{B,A_2} (\operatorname{turn}_{A_2} \circ \: \varphi_{A_2,B}(g)) \circ (1_B \otimes f)
   \end{equation}
-  Since
+  obtained by the following calculation:
   \begin{align*}
     \psi^{-1}_{B,A_1}(\operatorname{turn}_{A_1} \circ \: \varphi_{A_1,B}(g \circ f \otimes 1_B)) &= \psi^{-1}_{B,A_1}(\operatorname{turn}_{A_1} \circ \: \mathcal{C}(f,1_{\bot}) \circ \varphi_{A_2,B}(g)) \\
-    &= \psi^{-1}_{B,A_1}(\mathcal{C}(f,1_{\bot}) \circ \operatorname{turn}_{A_2} \circ \varphi_{A_2,B}(g))
+    &= \psi^{-1}_{B,A_1}(\mathcal{C}(f,1_{\bot}) \circ \operatorname{turn}_{A_2} \circ \varphi_{A_2,B}(g)) \\
     &= \psi^{-1}_{B,A_2} (\operatorname{turn}_{A_2} \circ \: \varphi_{A_2,B}(g)) \circ (1_B \otimes f)
   \end{align*}
+  The rest of the proof of this clause is immediate.
+  
+  The other way round part of the statement is more complicated.
+  Assume we are given a bijection $\operatorname{wheel}_{A,B} : \mathcal{C}(A \otimes B, \bot) \to 
+  \mathcal{C}(B \otimes A, \bot)$ natural in both $A$ and $B$. First of all, we have the following bijection:
+  \[
+  \mathcal{C}(A \multimap \bot, A \multimap \bot) \to (A \multimap \bot, \bot \multimapinv A)
+  \]
+  since 
+  \[ \mathcal{C}(A \multimap \bot, A \multimap \bot) \cong \mathcal{C}(A \otimes (A \multimap \bot), \bot) \cong \mathcal{C}((A \multimap \bot) \otimes A, \bot) \cong (A \multimap \bot, \bot \multimapinv A)
+  \]
+  Similarly, there is a bijection $\mathcal{C}(\bot \multimapinv A, \bot \multimapinv A) \cong \mathcal{C}(\bot \multimapinv A, A \multimap \bot)$.
+  Thus, those bijections constitute the isomorphism $A \multimap \bot \cong \bot \multimapinv A$.
 \end{proof}
 
 \end{document}
