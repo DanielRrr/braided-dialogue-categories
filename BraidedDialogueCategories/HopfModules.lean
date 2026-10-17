@@ -140,8 +140,8 @@ instance monoidalStruct : MonoidalCategoryStruct (Mod C H) where
     rw [Category.assoc, ← reassoc_of% h]
     simp only [Category.assoc]
     rw [← comp_whiskerRight_assoc, ComonObj.comul_counit]
-    rw [tensorHom_def', Category.assoc, rightUnitor_naturality, ← rightUnitor_monoidal_assoc]
-    rw [tensorHom_def, Category.assoc, ← comp_whiskerRight_assoc, Iso.inv_hom_id,
+    rw [tensorHom_def', Category.assoc, rightUnitor_naturality, ← rightUnitor_monoidal_assoc,
+      tensorHom_def, Category.assoc, ← comp_whiskerRight_assoc, Iso.inv_hom_id,
       id_whiskerRight, Category.id_comp]
   )
 
