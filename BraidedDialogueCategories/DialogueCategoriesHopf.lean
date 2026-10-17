@@ -4,7 +4,7 @@ public import Mathlib.CategoryTheory.Monoidal.Hopf_
 public import BraidedDialogueCategories.InternalHoms
 public import BraidedDialogueCategories.HopfModules
 
-@[expose] public noncomputable section
+@[expose] public section
 
 universe v
 
@@ -77,14 +77,14 @@ def Mod.rightDialogueStructure (H : C) [HopfObj H] [D : RightDialogueCategory C]
     { hasRightIhom A := Mod.hasRightIhom C H A ⟨D.bot⟩ }
 
 /-- `h ⊗ v ⊗ f ↦ h₍₂₎ ▷ leval (S⁻¹ h₍₁₎ ▷ v, f)`. -/
-def Mod.leftIhomSmulRHS (H : C) [HopfObj H] [IsIso 𝒮[H]] (V B : C) [ModObj H V] [ModObj H B]
+noncomputable def Mod.leftIhomSmulRHS (H : C) [HopfObj H] [IsIso 𝒮[H]] (V B : C) [ModObj H V] [ModObj H B]
     [HasLeftIhom V B] : (H ⊗ V) ⊗ HasLeftIhom.internalHomₗ V B ⟶ B :=
   (Δ[H] ▷ V) ▷ _ ≫ ((β_ H H).hom ▷ V) ▷ _ ≫ (α_ H H V).hom ▷ _ ≫
     (H ◁ (inv 𝒮[H] ▷ V ≫ γ[H, V])) ▷ _ ≫ (α_ H V _).hom ≫
     H ◁ HasLeftIhom.leftEval ≫ γ[H, B]
 
 /-- The action of `H` on `V ⊸ ⊥`: the unique morphism satisfying the pictured equation. -/
-def Mod.leftIhomSmul (H : C) [HopfObj H] [IsIso 𝒮[H]] (V B : C) [ModObj H V] [ModObj H B]
+noncomputable def Mod.leftIhomSmul (H : C) [HopfObj H] [IsIso 𝒮[H]] (V B : C) [ModObj H V] [ModObj H B]
     [HasLeftIhom V B] :
     H ⊗ HasLeftIhom.internalHomₗ V B ⟶ HasLeftIhom.internalHomₗ V B :=
   HasLeftIhom.homEquiv _ <|
@@ -98,13 +98,13 @@ lemma Mod.leftIhomSmul_spec (H : C) [HopfObj H] [IsIso 𝒮[H]] (V B : C) [ModOb
   rw [Mod.leftIhomSmul, ← id_tensorHom, HasLeftIhom.uncurry_curry]
   simp
 
-instance Mod.leftIhomModObj (H : C) [HopfObj H] [IsIso 𝒮[H]] (V B : C) [ModObj H V]
+noncomputable instance Mod.leftIhomModObj (H : C) [HopfObj H] [IsIso 𝒮[H]] (V B : C) [ModObj H V]
     [ModObj H B] [HasLeftIhom V B] : ModObj H (HasLeftIhom.internalHomₗ V B) where
   smul := Mod.leftIhomSmul C H V B
   one_smul := sorry
   mul_smul := sorry
 
-def Mod.hasLeftIhom (H : C) [HopfObj H] [IsIso 𝒮[H]] (A B : Mod C H) [HasLeftIhom A.X B.X] :
+noncomputable def Mod.hasLeftIhom (H : C) [HopfObj H] [IsIso 𝒮[H]] (A B : Mod C H) [HasLeftIhom A.X B.X] :
     HasLeftIhom A B where
   internalHomₗ := ⟨HasLeftIhom.internalHomₗ A.X B.X⟩
   homEquiv X :=
@@ -120,7 +120,7 @@ def Mod.hasLeftIhom (H : C) [HopfObj H] [IsIso 𝒮[H]] (A B : Mod C H) [HasLeft
 braided category `C` and that `(bot, smul)` is a left `H`-module. Then, every left dialogue structure
 with tensorial pole `bot` on the braided category `C` induces a left dialogue structure with
 tensorial pole `(bot, inv)` on the monoidal category `Mod(H)`. -/
-def Mod.leftDialogueStructure (H : C) [HopfObj H] [IsIso 𝒮[H]] [D : LeftDialogueCategory C]
+noncomputable def Mod.leftDialogueStructure (H : C) [HopfObj H] [IsIso 𝒮[H]] [D : LeftDialogueCategory C]
     [ModObj H D.bot] : LeftDialogueStructure (Mod C H) where
   bot := ⟨D.bot⟩
   leftClosed :=
