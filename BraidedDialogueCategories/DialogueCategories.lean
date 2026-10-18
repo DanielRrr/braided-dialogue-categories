@@ -181,6 +181,48 @@ lemma rightDual_hom_ext {X Y : C} {f g : X ⟶ rightDual Y}
   rw [HasRightIhom.symm_apply_eq, HasRightIhom.symm_apply_eq, tensorHom_id, tensorHom_id]
   exact h
 
+/-- The compatibility of `lev` with the associator. -/
+lemma lev_assoc (X Y Z : C) :
+    (Y ⊗ Z) ◁ leftDualMap (α_ X Y Z).inv ≫ lev (Y ⊗ Z) X =
+      (α_ Y Z (leftDual ((X ⊗ Y) ⊗ Z))).hom ≫ Y ◁ lev Z (X ⊗ Y) ≫ lev Y X := by
+  apply leftDual_hom_ext
+  rw [MonoidalCategory.whiskerLeft_comp_assoc, lev_leval, associator_inv_naturality_right_assoc,
+    leftDualMap_leval]
+  rw [MonoidalCategory.whiskerLeft_comp_assoc, MonoidalCategory.whiskerLeft_comp_assoc, lev_leval,
+    associator_inv_naturality_right_assoc, lev_leval, pentagon_hom_inv_inv_inv_inv_assoc]
+
+/-- The compatibility of `rev` with the associator. -/
+lemma rev_assoc (X Y Z : C) :
+    rightDualMap (α_ X Y Z).hom ▷ (X ⊗ Y) ≫ rev (X ⊗ Y) Z =
+      (α_ (rightDual (X ⊗ (Y ⊗ Z))) X Y).inv ≫ rev X (Y ⊗ Z) ▷ Y ≫ rev Y Z := by
+  apply rightDual_hom_ext
+  rw [comp_whiskerRight_assoc, rev_reval, associator_naturality_left_assoc, rightDualMap_reval,
+    comp_whiskerRight_assoc, comp_whiskerRight_assoc, rev_reval, associator_naturality_left_assoc,
+    rev_reval]
+  rw [← pentagon_assoc, inv_hom_whiskerRight_assoc]
+
+/-- `lev` is natural in both of its arguments. -/
+lemma lev_naturality {X X' Y Y' : C} (f : X ⟶ X') (g : Y ⟶ Y') :
+    Y ◁ leftDualMap (f ⊗ₘ g) ≫ lev Y X = g ▷ leftDual (X' ⊗ Y') ≫ lev Y' X' ≫ leftDualMap f := by
+  apply leftDual_hom_ext
+  rw [MonoidalCategory.whiskerLeft_comp_assoc, lev_leval, associator_inv_naturality_right_assoc,
+    leftDualMap_leval]
+  rw [MonoidalCategory.whiskerLeft_comp_assoc, MonoidalCategory.whiskerLeft_comp_assoc,
+    leftDualMap_leval, whisker_exchange_assoc, lev_leval]
+  rw [associator_inv_naturality_left_assoc, associator_inv_naturality_middle_assoc, tensorHom_def',
+    comp_whiskerRight_assoc]
+
+/-- `rev` is natural in both of its arguments. -/
+lemma rev_naturality {X X' Y Y' : C} (f : X ⟶ X') (g : Y ⟶ Y') :
+    rightDualMap (f ⊗ₘ g) ▷ X ≫ rev X Y =
+      rightDual (X' ⊗ Y') ◁ f ≫ rev X' Y' ≫ rightDualMap g := by
+  apply rightDual_hom_ext
+  rw [comp_whiskerRight_assoc, rev_reval, associator_naturality_left_assoc, rightDualMap_reval]
+  rw [comp_whiskerRight_assoc, comp_whiskerRight_assoc, rightDualMap_reval, ← whisker_exchange_assoc,
+    rev_reval]
+  rw [associator_naturality_right_assoc, associator_naturality_middle_assoc,
+    tensorHom_def, MonoidalCategory.whiskerLeft_comp_assoc]
+
 lemma adjNatLeft {A₁ A₂ : C} (B : C) (f : A₂ ⟶ A₁) (g : A₁ ⟶ rightDual B) :
   HasLeftIhom.homEquiv B ((HasRightIhom.homEquiv A₂).symm (f ≫ g)) =
   HasLeftIhom.homEquiv B ((HasRightIhom.homEquiv A₁).symm g) ≫ HasLeftIhom.contramap f := by
