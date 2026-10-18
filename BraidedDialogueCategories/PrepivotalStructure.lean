@@ -2,6 +2,7 @@ module
 
 public import Mathlib.CategoryTheory.Monoidal.Category
 public import BraidedDialogueCategories.DialogueCategories
+public import BraidedDialogueCategories.DialogueMonads
 import Mathlib.Tactic.CategoryTheory.Slice
 
 @[expose] public section

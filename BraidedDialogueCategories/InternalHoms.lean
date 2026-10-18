@@ -105,6 +105,20 @@ lemma contramapEval (f : A₁ ⟶ A₂) :
     (𝟙 A₁ ⊗ₘ contramap (B := B) f) ≫  leftEval = (f ⊗ₘ 𝟙 (internalHomₗ A₂ B)) ≫ leftEval :=
   uncurry_curry ((f ⊗ₘ 𝟙 (internalHomₗ A₂ B)) ≫ leftEval)
 
+/-- Two morphisms into `[A, B]ₗ` are equal as soon as their uncurried forms are. -/
+lemma left_hom_ext {A B X : C} [HasLeftIhom A B] {f g : X ⟶ internalHomₗ A B}
+    (h : A ◁ f ≫ leftEval = A ◁ g ≫ leftEval) : f = g := by
+  apply (homEquiv X).symm.injective
+  rw [symm_apply_eq, symm_apply_eq, id_tensorHom, id_tensorHom]
+  exact h
+
+/-- Uncurrying a curried morphism gives it back (whiskered form of `uncurry_curry`). -/
+@[reassoc]
+lemma homEquiv_whiskerLeft_evalLeft {A B X : C} [HasLeftIhom A B] (f : A ⊗ X ⟶ B) :
+    A ◁ homEquiv X f ≫ leftEval = f := by
+  rw [← id_tensorHom]
+  exact uncurry_curry f
+
 end HasLeftIhom
 
 /--
@@ -183,6 +197,21 @@ lemma symm_comp {X Y : C} (m : X ⟶ Y) (k : Y ⟶ internalHomᵣ A B) :
 lemma uncurry_curry {X : C} (φ : X ⊗ A ⟶ B) :
     (homEquiv X φ ⊗ₘ 𝟙 A) ≫ evalRight = φ := by
   rw [← symm_apply_eq, Equiv.symm_apply_apply]
+
+/-- Two morphisms into `[A, B]ᵣ` are equal as soon as their uncurried forms are. -/
+lemma right_hom_ext {A B X : C} [HasRightIhom A B] {f g : X ⟶ internalHomᵣ A B}
+    (h : f ▷ A ≫ evalRight = g ▷ A ≫ evalRight) : f = g := by
+  apply (homEquiv X).symm.injective
+  rw [symm_apply_eq, symm_apply_eq, tensorHom_id, tensorHom_id]
+  exact h
+
+/-- Uncurrying a curried morphism gives it back (whiskered form of `uncurry_curry`). -/
+@[reassoc]
+lemma homEquiv_whiskerRight_evalRight {A B X : C} [HasRightIhom A B] (f : X ⊗ A ⟶ B) :
+    homEquiv X f ▷ A ≫ evalRight = f := by
+  rw [← tensorHom_id]
+  exact uncurry_curry f
+
 end HasRightIhom
 
 /--

@@ -170,16 +170,12 @@ lemma rightNameFact (A : C) (f : A ⟶ bot) : f = (leftUnitor A).inv ≫ (rightN
 /-- Two morphisms into `leftDual Y` are equal whenever their uncurried forms are. -/
 lemma leftDual_hom_ext {X Y : C} {f g : X ⟶ leftDual Y}
     (h : Y ◁ f ≫ leval Y = Y ◁ g ≫ leval Y) : f = g := by
-  apply (HasLeftIhom.homEquiv (A := Y) (B := D.bot) X).symm.injective
-  rw [HasLeftIhom.symm_apply_eq, HasLeftIhom.symm_apply_eq, id_tensorHom, id_tensorHom]
-  exact h
+  apply left_hom_ext; exact h
 
 /-- Two morphisms into `rightDual Y` are equal whenever their uncurried forms are. -/
 lemma rightDual_hom_ext {X Y : C} {f g : X ⟶ rightDual Y}
     (h : f ▷ Y ≫ reval Y = g ▷ Y ≫ reval Y) : f = g := by
-  apply (HasRightIhom.homEquiv (A := Y) (B := D.bot) X).symm.injective
-  rw [HasRightIhom.symm_apply_eq, HasRightIhom.symm_apply_eq, tensorHom_id, tensorHom_id]
-  exact h
+  apply right_hom_ext; exact h
 
 /-- The compatibility of `lev` with the associator. -/
 lemma lev_assoc (X Y Z : C) :
