@@ -137,6 +137,27 @@ lemma Mod.unit_rightIhomPre (H : C) [HopfObj H] (Y A : C) [ModObj H A] :
   Mod.unit_rightIhomPre_aux C H Y A γ[H, A]
     (by have h := ModObj.one_smul (M := H) A; dsimp at h; exact h)
 
+/-- `rightIhomPre` is natural in `Y`. -/
+@[reassoc]
+lemma Mod.rightIhomPre_naturality (H : C) [HopfObj H] (A : C) [ModObj H A] {Y Y' : C}
+    (k : Y ⟶ Y') :
+    (H ◁ k) ▷ A ≫ Mod.rightIhomPre C H A Y' = Mod.rightIhomPre C H A Y ≫ H ◁ k ▷ A := by
+  simp only [Mod.rightIhomPre, ← comp_whiskerRight_assoc]
+  rw [whisker_exchange_assoc, associator_naturality_right_assoc,
+    ← MonoidalCategory.whiskerLeft_comp_assoc, BraidedCategory.braiding_naturality_right,
+    MonoidalCategory.whiskerLeft_comp_assoc, associator_inv_naturality_middle]
+  simp only [comp_whiskerRight, Category.assoc]
+  rw [associator_naturality_left_assoc, ← whisker_exchange_assoc,
+    associator_naturality_middle]
+
+/-- `rightIhomPre` for a product `hk` is `rightIhomPre` for `h`, then for `k`, then multiply. -/
+@[reassoc]
+lemma Mod.mul_rightIhomPre (H : C) [HopfObj H] (Y A : C) [ModObj H A] :
+    (μ[H] ▷ Y) ▷ A ≫ Mod.rightIhomPre C H A Y =
+      (α_ H H Y).hom ▷ A ≫ Mod.rightIhomPre C H A (H ⊗ Y) ≫ H ◁ Mod.rightIhomPre C H A Y ≫
+        (α_ H H (Y ⊗ A)).inv ≫ μ[H] ▷ (Y ⊗ A) := by
+  sorry
+
 instance Mod.rightIhomModObj (H : C) [HopfObj H] (A B : C) [ModObj H A] [ModObj H B]
     [HasRightIhom A B] : ModObj H (HasRightIhom.internalHomᵣ A B) where
   smul := Mod.rightIhomSmul C H A B
@@ -147,7 +168,16 @@ instance Mod.rightIhomModObj (H : C) [HopfObj H] (A B : C) [ModObj H A] [ModObj 
     rw [comp_whiskerRight_assoc, Mod.rightIhomSmul, HasRightIhom.homEquiv_whiskerRight_evalRight,
       Mod.unit_rightIhomPre_assoc, ← whisker_exchange_assoc, hB, leftUnitor_naturality,
       leftUnitor_whiskerRight_assoc]
-  mul_smul := sorry
+  mul_smul := by
+    have hB := ModObj.assoc_flip (M := H) B
+    dsimp at hB ⊢
+    apply HasRightIhom.right_hom_ext
+    simp only [comp_whiskerRight, Category.assoc]
+    rw [Mod.rightIhomSmul, HasRightIhom.homEquiv_whiskerRight_evalRight, Mod.mul_rightIhomPre_assoc,
+      Mod.rightIhomPre_naturality_assoc, ← MonoidalCategory.whiskerLeft_comp_assoc,
+      HasRightIhom.homEquiv_whiskerRight_evalRight]
+    simp only [MonoidalCategory.whiskerLeft_comp, Category.assoc]
+    rw [hB, associator_inv_naturality_right_assoc, whisker_exchange_assoc]
 
 /-- The right internal hom `[A, B]ᵣ` in `Mod C H`, computed in `C`. -/
 def Mod.hasRightIhom (H : C) [HopfObj H] (A B : Mod C H) [HasRightIhom A.X B.X] :
